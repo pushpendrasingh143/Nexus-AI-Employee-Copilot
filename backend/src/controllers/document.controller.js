@@ -1,0 +1,50 @@
+const documentService = require("../services/document.service");
+
+const uploadDocument = async (req, res, next) => {
+  try {
+    const document = await documentService.uploadDocument(
+      req.file,
+      req.user.id
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Document uploaded successfully",
+      data: document,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAllDocuments = async (req, res, next) => {
+  try {
+    const documents = await documentService.getAllDocuments();
+
+    res.status(200).json({
+      success: true,
+      data: documents,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getDocumentById = async (req, res, next) => {
+  try {
+    const document = await documentService.getDocumentById(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      data: document,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  uploadDocument,
+  getAllDocuments,
+  getDocumentById,
+};
