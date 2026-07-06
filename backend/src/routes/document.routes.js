@@ -15,16 +15,15 @@ router.post(
   documentController.uploadDocument
 );
 
-router.get(
-  "/",
-  authMiddleware,
-  documentController.getAllDocuments
-);
+router.get("/", authMiddleware, documentController.getAllDocuments);
 
-router.get(
+router.get("/:id", authMiddleware, documentController.getDocumentById);
+
+router.delete(
   "/:id",
   authMiddleware,
-  documentController.getDocumentById
+  roleMiddleware("admin", "hr"),
+  documentController.deleteDocument
 );
 
 module.exports = router;

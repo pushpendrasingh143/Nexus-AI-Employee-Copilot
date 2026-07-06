@@ -20,8 +20,22 @@ const getDocumentById = (id) => {
   });
 };
 
+const createDocumentChunk = (chunk) => {
+  return prisma.documentChunk.create({
+    data: chunk,
+  });
+};
+
+const deleteDocument = (id) => {
+  return prisma.document.delete({
+    where: { id },
+  });
+};
+
 module.exports = {
   createDocument,
   getAllDocuments,
   getDocumentById,
+  createDocumentChunk,
+  deleteDocument,
 };

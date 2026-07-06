@@ -37,4 +37,22 @@ model Document {
   uploadedBy String
 
   createdAt  DateTime @default(now())
+
+  chunks     DocumentChunk[]
+}
+
+model DocumentChunk {
+  id          String   @id @default(cuid())
+
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  content     String
+  chunkIndex  Int
+  embedding   Unsupported("vector(768)")?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([documentId])
 }

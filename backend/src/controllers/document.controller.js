@@ -43,8 +43,22 @@ const getDocumentById = async (req, res, next) => {
   }
 };
 
+const deleteDocument = async (req, res, next) => {
+  try {
+    await documentService.deleteDocument(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Document deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   uploadDocument,
   getAllDocuments,
   getDocumentById,
+  deleteDocument,
 };

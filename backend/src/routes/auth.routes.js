@@ -1,4 +1,5 @@
 const express = require("express");
+
 const {
   registerUser,
   loginUser,
@@ -6,11 +7,18 @@ const {
 
 const authenticate = require("../middleware/auth.middleware");
 const authorize = require("../middleware/role.middleware");
+const validate = require("../middleware/validate.middleware");
+
+const {
+  registerSchema,
+  loginSchema,
+} = require("../validations/auth.validation");
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/register", validate(registerSchema), registerUser);
+
+router.post("/login", validate(loginSchema), loginUser);
 
 router.get("/me", authenticate, (req, res) => {
   res.status(200).json({
@@ -20,7 +28,6 @@ router.get("/me", authenticate, (req, res) => {
   });
 });
 
-// Admin Only Test Route
 router.get("/admin", authenticate, authorize("admin"), (req, res) => {
   res.status(200).json({
     success: true,
