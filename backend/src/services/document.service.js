@@ -5,7 +5,7 @@ const { extractTextFromPDF } = require("./pdf.service");
 const { splitTextIntoChunks } = require("./chunk.service");
 const aiService = require("./ai.service");
 
-const MIN_RELEVANCE_SCORE = 0.45;
+const MIN_RELEVANCE_SCORE = 0.15;
 
 const uploadDocument = async (file, userId) => {
   const document = await documentRepository.createDocument({
@@ -32,16 +32,43 @@ const uploadDocument = async (file, userId) => {
   return document;
 };
 
+const isSummaryQuestion = (query) => {
+  const normalizedQuery = query.toLowerCase();
+
+  return (
+    normalizedQuery.includes("summary") ||
+    normalizedQuery.includes("summarize") ||
+    normalizedQuery.includes("summarise") ||
+    normalizedQuery.includes("about this document") ||
+    normalizedQuery.includes("about the document") ||
+    normalizedQuery.includes("file ke bare") ||
+    normalizedQuery.includes("document ke bare") ||
+    normalizedQuery.includes("kya hai")
+  );
+};
+
 const searchRelevantChunks = async (query, documentId = null) => {
   const embedding = await aiService.generateEmbedding(query);
 
   const chunks = await vectorRepository.searchSimilarChunks(
     embedding,
-    5,
+    8,
     documentId
   );
 
-  return chunks.filter((chunk) => Number(chunk.score) >= MIN_RELEVANCE_SCORE);
+  if (!chunks.length) {
+    return [];
+  }
+
+  if (isSummaryQuestion(query)) {
+    return chunks;
+  }
+
+  const relevantChunks = chunks.filter(
+    (chunk) => Number(chunk.score) >= MIN_RELEVANCE_SCORE
+  );
+
+  return relevantChunks.length ? relevantChunks : chunks.slice(0, 3);
 };
 
 const getAllDocuments = async () => {
