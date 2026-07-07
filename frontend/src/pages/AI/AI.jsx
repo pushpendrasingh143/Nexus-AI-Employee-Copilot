@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 
 import SmartToyIcon from "@mui/icons-material/SmartToy";
-import PersonIcon from "@mui/icons-material/Person";
 import SendIcon from "@mui/icons-material/Send";
 
 import {
@@ -24,7 +23,7 @@ import {
 } from "../../services/ai.service";
 
 const AI = () => {
-  const [mode, setMode] = useState("chat");
+  const [mode, setMode] = useState("rag");
   const [message, setMessage] = useState("");
   const [reply, setReply] = useState("");
   const [sources, setSources] = useState([]);
@@ -36,18 +35,20 @@ const AI = () => {
     if (!message.trim()) return;
 
     setLoading(true);
+    setReply("");
+    setSources([]);
 
     try {
-      if (mode === "chat") {
-        const response = await chatWithAI(message);
-
-        setReply(response);
-        setSources([]);
-      } else {
+      if (mode === "rag") {
         const response = await askDocumentAI(message);
 
         setReply(response.answer);
         setSources(response.sources || []);
+      } else {
+        const response = await chatWithAI(message);
+
+        setReply(response);
+        setSources([]);
       }
 
       setMessage("");
@@ -60,18 +61,11 @@ const AI = () => {
 
   return (
     <Box>
-      <Typography
-        variant="h4"
-        fontWeight="bold"
-        mb={1}
-      >
+      <Typography variant="h4" fontWeight="bold" mb={1}>
         Nexus AI Assistant
       </Typography>
 
-      <Typography
-        color="text.secondary"
-        mb={4}
-      >
+      <Typography color="text.secondary" mb={3}>
         Chat with AI or ask questions from uploaded documents.
       </Typography>
 
@@ -85,39 +79,56 @@ const AI = () => {
             setSources([]);
           }
         }}
-        sx={{ mb: 3 }}
+        sx={{
+          mb: 3,
+          backgroundColor: "#e5e7eb",
+          borderRadius: "12px",
+          padding: "6px",
+          gap: "8px",
+          "& .MuiToggleButton-root": {
+            color: "#111827",
+            backgroundColor: "#ffffff",
+            border: "1px solid #cbd5e1",
+            borderRadius: "10px",
+            px: 3,
+            py: 1,
+            fontWeight: 700,
+            textTransform: "none",
+          },
+          "& .MuiToggleButton-root.Mui-selected": {
+            color: "#ffffff !important",
+            backgroundColor: "#4f46e5 !important",
+            borderColor: "#4f46e5",
+          },
+          "& .MuiToggleButton-root:hover": {
+            backgroundColor: "#eef2ff",
+          },
+          "& .MuiToggleButton-root.Mui-selected:hover": {
+            backgroundColor: "#4338ca !important",
+          },
+        }}
       >
-        <ToggleButton value="chat">
-          Normal Chat
-        </ToggleButton>
-
         <ToggleButton value="rag">
           Ask Documents
         </ToggleButton>
+
+        <ToggleButton value="chat">
+          Normal Chat
+        </ToggleButton>
       </ToggleButtonGroup>
 
-      <Paper
-        sx={{
-          p: 3,
-          borderRadius: 4,
-        }}
-      >
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-        >
+      <Paper sx={{ p: 3, borderRadius: 4 }}>
+        <Box component="form" onSubmit={handleSubmit}>
           <TextField
             fullWidth
             multiline
             rows={5}
             value={message}
-            onChange={(e) =>
-              setMessage(e.target.value)
-            }
+            onChange={(e) => setMessage(e.target.value)}
             placeholder={
-              mode === "chat"
-                ? "Ask anything..."
-                : "Ask questions from uploaded PDFs..."
+              mode === "rag"
+                ? "Ask questions from uploaded PDFs..."
+                : "Ask anything..."
             }
           />
 
@@ -126,55 +137,34 @@ const AI = () => {
             variant="contained"
             startIcon={
               loading ? (
-                <CircularProgress
-                  color="inherit"
-                  size={18}
-                />
+                <CircularProgress color="inherit" size={18} />
               ) : (
                 <SendIcon />
               )
             }
             disabled={loading}
-            sx={{
-              mt: 2,
-              px: 4,
-            }}
+            sx={{ mt: 2, px: 4 }}
           >
             {loading
               ? "Thinking..."
-              : mode === "chat"
-              ? "Send"
-              : "Ask AI"}
+              : mode === "rag"
+              ? "Ask Documents"
+              : "Send"}
           </Button>
         </Box>
       </Paper>
 
       {reply && (
-        <Paper
-          sx={{
-            mt: 4,
-            p: 3,
-            borderRadius: 4,
-          }}
-        >
-          <Box
-            display="flex"
-            gap={2}
-            mb={2}
-          >
+        <Paper sx={{ mt: 4, p: 3, borderRadius: 4 }}>
+          <Box display="flex" gap={2} mb={2}>
             <SmartToyIcon color="primary" />
 
             <Box>
-              <Typography
-                fontWeight="bold"
-                mb={1}
-              >
+              <Typography fontWeight="bold" mb={1}>
                 AI Response
               </Typography>
 
-              <Typography>
-                {reply}
-              </Typography>
+              <Typography>{reply}</Typography>
             </Box>
           </Box>
 
@@ -182,46 +172,36 @@ const AI = () => {
             <>
               <Divider sx={{ my: 3 }} />
 
-              <Typography
-                variant="h6"
-                gutterBottom
-              >
+              <Typography variant="h6" gutterBottom>
                 Sources
               </Typography>
 
-              {sources.map(
-                (source, index) => (
-                  <Paper
-                    key={index}
-                    variant="outlined"
-                    sx={{
-                      p: 2,
-                      mb: 2,
-                    }}
-                  >
-                    <Chip
-                      label={`Chunk #${source.chunkIndex}`}
-                      color="primary"
-                      size="small"
-                    />
+              {sources.map((source, index) => (
+                <Paper
+                  key={index}
+                  variant="outlined"
+                  sx={{ p: 2, mb: 2 }}
+                >
+                  <Chip
+                    label={`Chunk #${source.chunkIndex}`}
+                    color="primary"
+                    size="small"
+                  />
 
+                  {source.score !== undefined && (
                     <Chip
-                      label={`Score ${Number(
-                        source.score
-                      ).toFixed(2)}`}
+                      label={`Score ${Number(source.score).toFixed(2)}`}
                       color="success"
                       size="small"
                       sx={{ ml: 1 }}
                     />
+                  )}
 
-                    <Typography
-                      mt={2}
-                    >
-                      {source.preview}
-                    </Typography>
-                  </Paper>
-                )
-              )}
+                  <Typography mt={2}>
+                    {source.preview}
+                  </Typography>
+                </Paper>
+              ))}
             </>
           )}
         </Paper>
