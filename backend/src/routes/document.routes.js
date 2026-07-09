@@ -17,6 +17,12 @@ router.post(
 
 router.get("/", authMiddleware, documentController.getAllDocuments);
 
+router.get(
+  "/:id/summary",
+  authMiddleware,
+  documentController.getDocumentSummary
+);
+
 router.get("/:id", authMiddleware, documentController.getDocumentById);
 
 router.delete(

@@ -17,6 +17,11 @@ model User {
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id])
 
+chatSessions ChatSession[]
+
+assignedTasks Task[] @relation("AssignedTasks")
+createdTasks  Task[] @relation("CreatedTasks")
+
   createdAt    DateTime    @default(now())
 }
 
@@ -55,4 +60,50 @@ model DocumentChunk {
   updatedAt   DateTime @updatedAt
 
   @@index([documentId])
+}
+model ChatSession {
+  id        String        @id @default(cuid())
+  title     String        @default("New Chat")
+
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages  ChatMessage[]
+
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  role      String
+  content   String
+
+  createdAt DateTime    @default(now())
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("pending")
+  priority    String   @default("medium")
+  dueDate     DateTime?
+
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  createdById  String
+  createdBy    User    @relation("CreatedTasks", fields: [createdById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assignedToId])
+  @@index([createdById])
+  @@index([status])
 }

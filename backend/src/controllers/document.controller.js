@@ -43,6 +43,20 @@ const getDocumentById = async (req, res, next) => {
   }
 };
 
+const getDocumentSummary = async (req, res, next) => {
+  try {
+    const summary = await documentService.summarizeDocument(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Document summary generated successfully",
+      data: summary,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const deleteDocument = async (req, res, next) => {
   try {
     await documentService.deleteDocument(req.params.id);
@@ -60,5 +74,6 @@ module.exports = {
   uploadDocument,
   getAllDocuments,
   getDocumentById,
+  getDocumentSummary,
   deleteDocument,
 };

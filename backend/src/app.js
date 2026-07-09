@@ -10,25 +10,51 @@ const app = express();
 
 app.use(helmet());
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://nexus-ai-employee-copilot.vercel.app",
+];
+
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "*",
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
 
 app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
     message: {
       success: false,
       message: "Too many requests, please try again later.",
     },
   })
 );
+
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Nexus AI Employee Copilot Backend is running",
+    version: "1.0.0",
+  });
+});
 
 app.use("/api/v1", v1Routes);
 

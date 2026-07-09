@@ -20,6 +20,23 @@ const getDocumentById = (id) => {
   });
 };
 
+const getDocumentsByIds = (ids) => {
+  return prisma.document.findMany({
+    where: {
+      id: {
+        in: ids,
+      },
+    },
+    select: {
+      id: true,
+      fileName: true,
+      fileType: true,
+      uploadedBy: true,
+      createdAt: true,
+    },
+  });
+};
+
 const createDocumentChunk = (chunk) => {
   return prisma.documentChunk.create({
     data: chunk,
@@ -32,10 +49,30 @@ const deleteDocument = (id) => {
   });
 };
 
+const getDocumentChunksByDocumentId = (documentId) => {
+  return prisma.documentChunk.findMany({
+    where: {
+      documentId,
+    },
+    orderBy: {
+      chunkIndex: "asc",
+    },
+    select: {
+      id: true,
+      documentId: true,
+      content: true,
+      chunkIndex: true,
+      createdAt: true,
+    },
+  });
+};
+
 module.exports = {
   createDocument,
   getAllDocuments,
   getDocumentById,
+  getDocumentsByIds,
+  getDocumentChunksByDocumentId,
   createDocumentChunk,
   deleteDocument,
 };

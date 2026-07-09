@@ -47,6 +47,38 @@ const isSummaryQuestion = (query) => {
   );
 };
 
+const enrichChunksWithDocumentInfo = async (chunks) => {
+  const documentIds = [
+    ...new Set(
+      chunks
+        .map((chunk) => chunk.documentId || chunk.documentid)
+        .filter(Boolean)
+    ),
+  ];
+
+  if (!documentIds.length) {
+    return chunks;
+  }
+
+  const documents = await documentRepository.getDocumentsByIds(documentIds);
+
+  const documentMap = documents.reduce((acc, document) => {
+    acc[document.id] = document;
+    return acc;
+  }, {});
+
+  return chunks.map((chunk) => {
+    const documentId = chunk.documentId || chunk.documentid;
+
+    return {
+      ...chunk,
+      documentId,
+      document: documentMap[documentId] || null,
+      sourceName: documentMap[documentId]?.fileName || "Unknown Document",
+    };
+  });
+};
+
 const searchRelevantChunks = async (query, documentId = null) => {
   const embedding = await aiService.generateEmbedding(query);
 
@@ -60,15 +92,19 @@ const searchRelevantChunks = async (query, documentId = null) => {
     return [];
   }
 
+  let finalChunks;
+
   if (isSummaryQuestion(query)) {
-    return chunks;
+    finalChunks = chunks;
+  } else {
+    const relevantChunks = chunks.filter(
+      (chunk) => Number(chunk.score) >= MIN_RELEVANCE_SCORE
+    );
+
+    finalChunks = relevantChunks.length ? relevantChunks : chunks.slice(0, 3);
   }
 
-  const relevantChunks = chunks.filter(
-    (chunk) => Number(chunk.score) >= MIN_RELEVANCE_SCORE
-  );
-
-  return relevantChunks.length ? relevantChunks : chunks.slice(0, 3);
+  return enrichChunksWithDocumentInfo(finalChunks);
 };
 
 const getAllDocuments = async () => {
@@ -83,6 +119,26 @@ const getDocumentById = async (id) => {
   }
 
   return document;
+};
+
+const summarizeDocument = async (id) => {
+  const document = await getDocumentById(id);
+
+  const chunks = await documentRepository.getDocumentChunksByDocumentId(id);
+
+  if (!chunks.length) {
+    throw new Error("No text chunks found for this document");
+  }
+
+  const summary = await aiService.generateDocumentSummary(document, chunks);
+
+  return {
+    documentId: document.id,
+    documentName: document.fileName,
+    documentType: document.fileType,
+    totalChunks: chunks.length,
+    summary,
+  };
 };
 
 const deleteDocument = async (id) => {
@@ -102,5 +158,6 @@ module.exports = {
   searchRelevantChunks,
   getAllDocuments,
   getDocumentById,
+  summarizeDocument,
   deleteDocument,
 };
