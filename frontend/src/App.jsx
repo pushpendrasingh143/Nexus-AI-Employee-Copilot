@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import Agents from "./pages/Agents/Agents";
 import Login from "./pages/Login/Login";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Employees from "./pages/Employees/Employees";
@@ -80,6 +81,16 @@ function App() {
         }
       />
 
+      <Route
+  path="/agents"
+  element={
+    <ProtectedRoute>
+      <DashboardLayout>
+        <Agents />
+      </DashboardLayout>
+    </ProtectedRoute>
+  }
+/>
       <Route
         path="/settings"
         element={

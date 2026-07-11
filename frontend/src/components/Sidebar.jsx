@@ -4,6 +4,7 @@ import {
   Apartment,
   Description,
   SmartToy,
+  AutoAwesome,
   Logout,
 } from "@mui/icons-material";
 
@@ -48,6 +49,11 @@ const menuItems = [
     path: "/ai",
     icon: <SmartToy />,
   },
+  {
+  title: "AI Agents",
+  path: "/agents",
+  icon: <AutoAwesome />,
+},
 ];
 
 const Sidebar = () => {

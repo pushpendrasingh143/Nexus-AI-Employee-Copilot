@@ -35,15 +35,20 @@ const Sidebar = () => {
       ],
     },
     {
-      title: "AI",
-      items: [
-        {
-          name: "AI Assistant",
-          path: "/ai",
-          icon: "🤖",
-        },
-      ],
+  title: "AI",
+  items: [
+    {
+      name: "AI Assistant",
+      path: "/ai",
+      icon: "🤖",
     },
+    {
+      name: "AI Agents",
+      path: "/agents",
+      icon: "🧠",
+    },
+  ],
+},
   ];
 
   const logout = () => {

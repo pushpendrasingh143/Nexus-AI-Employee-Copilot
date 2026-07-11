@@ -1,10 +1,7 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-import {
-  Grid,
-  Paper,
-  Typography,
-} from "@mui/material";
+
 
 import {
   BarChart,
@@ -17,6 +14,13 @@ import {
   Pie,
   Cell,
 } from "recharts";
+
+import {
+  Grid,
+  Paper,
+  Typography,
+  Button,
+} from "@mui/material";
 
 import DashboardCard from "../../components/layout/DashboardCard";
 import { getDashboardStats } from "../../services/dashboard.service";
@@ -84,6 +88,15 @@ const Dashboard = () => {
       >
         Welcome to Nexus AI Employee Copilot
       </Typography>
+
+      <Button
+  component={Link}
+  to="/agents"
+  variant="contained"
+  sx={{ mb: 3 }}
+>
+  Open AI Agents
+</Button>
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 3 }}>
