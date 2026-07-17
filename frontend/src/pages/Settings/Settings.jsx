@@ -38,6 +38,8 @@ import {
   VerifiedUserRounded,
 } from "@mui/icons-material";
 
+import { useThemeMode } from "../../theme/ThemeModeProvider";
+
 const defaultPreferences = {
   emailNotifications: true,
   aiSuggestions: true,
@@ -75,6 +77,7 @@ const getStoredPreferences = () => {
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { mode, setMode } = useThemeMode();
 
   const [user] = useState(getStoredUser);
   const [preferences, setPreferences] = useState(
@@ -149,6 +152,7 @@ const Settings = () => {
 
   const resetPreferences = () => {
     setPreferences(defaultPreferences);
+    setMode("light");
 
     localStorage.setItem(
       "nexus_preferences",
@@ -725,11 +729,11 @@ const Settings = () => {
             <PreferenceRow
               icon={<DarkModeRounded />}
               title="Dark Mode"
-              description="Full dark theme will be available in a future release."
-              checked={false}
-              onChange={() => {}}
-              disabled
-              badge="Coming Soon"
+              description="Switch the Nexus AI workspace between light and dark mode."
+              checked={mode === "dark"}
+              onChange={() =>
+                setMode(mode === "dark" ? "light" : "dark")
+              }
             />
 
             <Divider

@@ -130,3 +130,179 @@ code {
   background: var(--code-bg);
 }
 
+/* ========================================
+   NEXUS AI — COMPLETE DARK MODE
+======================================== */
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  background: #0f172a !important;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root {
+  min-height: 100%;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Main page background */
+
+html[data-theme="dark"] body main,
+html[data-theme="dark"] body .MuiContainer-root {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Navbar */
+
+html[data-theme="dark"] body .MuiAppBar-root,
+html[data-theme="dark"] body header {
+  background: #111827 !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* Cards, papers and dialogs */
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiAlert-root),
+html[data-theme="dark"] body .MuiCard-root,
+html[data-theme="dark"] body .MuiDialog-paper,
+html[data-theme="dark"] body .MuiPopover-paper,
+html[data-theme="dark"] body .MuiMenu-paper,
+html[data-theme="dark"] body .MuiTableContainer-root {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+/* Text */
+
+html[data-theme="dark"] body .MuiTypography-root {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] body .MuiTypography-body2,
+html[data-theme="dark"] body .MuiFormHelperText-root,
+html[data-theme="dark"] body .MuiInputLabel-root {
+  color: #cbd5e1 !important;
+}
+
+/* Dividers */
+
+html[data-theme="dark"] body .MuiDivider-root {
+  border-color: #334155 !important;
+}
+
+/* Input fields */
+
+html[data-theme="dark"] body .MuiOutlinedInput-root,
+html[data-theme="dark"] body .MuiFilledInput-root,
+html[data-theme="dark"] body .MuiInput-root {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] body .MuiInputBase-input,
+html[data-theme="dark"] body .MuiSelect-select,
+html[data-theme="dark"] body textarea {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiInputBase-input::placeholder,
+html[data-theme="dark"] body textarea::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiOutlinedInput-notchedOutline {
+  border-color: #475569 !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiOutlinedInput-root:hover
+  .MuiOutlinedInput-notchedOutline {
+  border-color: #818cf8 !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiOutlinedInput-root.Mui-focused
+  .MuiOutlinedInput-notchedOutline {
+  border-color: #6366f1 !important;
+}
+
+/* Tables */
+
+html[data-theme="dark"] body .MuiTable-root {
+  background: #1e293b !important;
+}
+
+html[data-theme="dark"] body .MuiTableCell-root {
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] body .MuiTableHead-root {
+  background: #111827 !important;
+}
+
+html[data-theme="dark"] body .MuiTableRow-root:hover {
+  background: #273449 !important;
+}
+
+/* Lists and menus */
+
+html[data-theme="dark"] body .MuiList-root {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] body .MuiMenuItem-root {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] body .MuiMenuItem-root:hover {
+  background: #334155 !important;
+}
+
+/* Dialog sections */
+
+html[data-theme="dark"] body .MuiDialogTitle-root,
+html[data-theme="dark"] body .MuiDialogContent-root,
+html[data-theme="dark"] body .MuiDialogActions-root {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+/* Outlined buttons */
+
+html[data-theme="dark"] body .MuiButton-outlined {
+  border-color: #475569 !important;
+}
+
+/* Empty areas and response boxes */
+
+html[data-theme="dark"] body pre {
+  color: #f8fafc !important;
+}
+
+/* Scrollbar */
+
+html[data-theme="dark"] body::-webkit-scrollbar-track,
+html[data-theme="dark"] *::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+html[data-theme="dark"] body::-webkit-scrollbar-thumb,
+html[data-theme="dark"] *::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}

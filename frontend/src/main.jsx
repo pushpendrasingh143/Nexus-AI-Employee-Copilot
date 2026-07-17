@@ -1,17 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "@mui/material/styles";
 import { Toaster } from "react-hot-toast";
 
 import App from "./App";
-import theme from "./theme/theme";
+import ThemeModeProvider from "./theme/ThemeModeProvider";
 
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <ThemeProvider theme={theme}>
+    <ThemeModeProvider>
       <BrowserRouter>
         <Toaster
           position="top-right"
@@ -21,13 +20,13 @@ createRoot(document.getElementById("root")).render(
             style: {
               borderRadius: "12px",
               background: "#111827",
-              color: "#fff",
+              color: "#FFFFFF",
             },
           }}
         />
 
         <App />
       </BrowserRouter>
-    </ThemeProvider>
+    </ThemeModeProvider>
   </StrictMode>
 );
