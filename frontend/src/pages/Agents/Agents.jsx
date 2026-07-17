@@ -1,4 +1,9 @@
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 
 import {
@@ -40,6 +45,8 @@ import {
   RefreshRounded,
   TaskAltRounded,
   WindowRounded,
+  MicRounded,
+  StopCircleRounded,
 } from "@mui/icons-material";
 
 import {
@@ -305,6 +312,9 @@ const Agents = () => {
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  const recognitionRef = useRef(null);
 
   const selected = useMemo(
     () =>
@@ -333,6 +343,12 @@ const Agents = () => {
   };
 
   const handleAgentSelect = (agentKey) => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+    }
+
     setSelectedAgent(agentKey);
     setResult("");
     setError("");
@@ -371,6 +387,110 @@ const Agents = () => {
 
     return "";
   };
+
+  const startVoiceListening = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      toast.error(
+        "Microphone voice input is not supported. Please use Google Chrome."
+      );
+      return;
+    }
+
+    if (recognitionRef.current || isListening) {
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setError("");
+        toast.success("Microphone started. Speak now.");
+      };
+
+      recognition.onresult = (event) => {
+        const spokenText =
+          event.results?.[0]?.[0]?.transcript?.trim() ||
+          "";
+
+        if (!spokenText) {
+          toast.error("No speech was recognized.");
+          return;
+        }
+
+        setForm((currentForm) => ({
+          ...currentForm,
+          transcript: spokenText,
+        }));
+
+        toast.success("Voice converted to text");
+      };
+
+      recognition.onerror = (event) => {
+        console.error(
+          "Speech recognition error:",
+          event.error
+        );
+
+        if (event.error === "not-allowed") {
+          toast.error(
+            "Microphone permission denied. Allow microphone access in the browser."
+          );
+        } else if (event.error === "no-speech") {
+          toast.error(
+            "No speech detected. Please speak clearly and try again."
+          );
+        } else if (event.error !== "aborted") {
+          toast.error("Unable to recognize your voice.");
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        recognitionRef.current = null;
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (speechError) {
+      console.error(
+        "Unable to start speech recognition:",
+        speechError
+      );
+
+      recognitionRef.current = null;
+      setIsListening(false);
+      toast.error("Unable to start the microphone.");
+    }
+  };
+
+  const stopVoiceListening = () => {
+    if (!recognitionRef.current) {
+      setIsListening(false);
+      return;
+    }
+
+    recognitionRef.current.stop();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
 
   const runAgent = async () => {
     const validationError = validateInput();
@@ -528,6 +648,12 @@ const Agents = () => {
   };
 
   const handleReset = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+      recognitionRef.current = null;
+    }
+
+    setIsListening(false);
     setForm(initialForm);
     setResult("");
     setError("");
@@ -568,18 +694,137 @@ const Agents = () => {
       )}
 
       {selectedAgent === "voice" && (
-        <TextField
-          fullWidth
-          multiline
-          minRows={4}
-          maxRows={8}
-          label="Voice Transcript"
-          name="transcript"
-          value={form.transcript}
-          onChange={handleChange}
-          placeholder="Paste or enter the voice transcript..."
-          sx={fieldStyles}
-        />
+        <Box>
+          <TextField
+            fullWidth
+            multiline
+            minRows={4}
+            maxRows={8}
+            label="Voice Transcript"
+            name="transcript"
+            value={form.transcript}
+            onChange={handleChange}
+            placeholder="Click Start Microphone and speak..."
+            helperText={
+              isListening
+                ? "Listening... Speak clearly into your microphone."
+                : "Your spoken command will appear here. You can also edit it manually."
+            }
+            sx={{
+              ...fieldStyles,
+
+              "& .MuiFormHelperText-root": {
+                color: isListening
+                  ? "#16A34A !important"
+                  : "#64748B !important",
+                fontWeight: isListening ? 800 : 500,
+              },
+            }}
+          />
+
+          <Stack
+            direction={{
+              xs: "column",
+              sm: "row",
+            }}
+            alignItems={{
+              xs: "stretch",
+              sm: "center",
+            }}
+            gap={1.5}
+            mt={1.5}
+          >
+            <Button
+              type="button"
+              variant={
+                isListening ? "contained" : "outlined"
+              }
+              disabled={loading}
+              onClick={
+                isListening
+                  ? stopVoiceListening
+                  : startVoiceListening
+              }
+              startIcon={
+                isListening ? (
+                  <StopCircleRounded />
+                ) : (
+                  <MicRounded />
+                )
+              }
+              sx={{
+                color: isListening
+                  ? "#FFFFFF !important"
+                  : "#DB2777 !important",
+                backgroundColor: isListening
+                  ? "#DC2626 !important"
+                  : "#FFFFFF !important",
+                borderColor: isListening
+                  ? "#DC2626 !important"
+                  : "#F9A8D4 !important",
+                borderRadius: 2.5,
+                px: 2,
+                fontWeight: 800,
+                textTransform: "none",
+
+                "&:hover": {
+                  backgroundColor: isListening
+                    ? "#B91C1C !important"
+                    : "#FDF2F8 !important",
+                  borderColor: isListening
+                    ? "#B91C1C !important"
+                    : "#DB2777 !important",
+                },
+              }}
+            >
+              {isListening
+                ? "Stop Listening"
+                : "Start Microphone"}
+            </Button>
+
+            <Chip
+              icon={
+                isListening ? (
+                  <MicRounded />
+                ) : (
+                  <CheckCircleRounded />
+                )
+              }
+              label={
+                isListening
+                  ? "Listening..."
+                  : "Microphone Ready"
+              }
+              size="small"
+              sx={{
+                alignSelf: {
+                  xs: "flex-start",
+                  sm: "center",
+                },
+                color: isListening
+                  ? "#15803D !important"
+                  : "#64748B !important",
+                backgroundColor: isListening
+                  ? "#F0FDF4 !important"
+                  : "#F8FAFC !important",
+                border: isListening
+                  ? "1px solid #BBF7D0"
+                  : "1px solid #E2E8F0",
+                fontWeight: 800,
+
+                "& .MuiChip-label": {
+                  color: "inherit !important",
+                },
+
+                "& .MuiChip-icon": {
+                  color: isListening
+                    ? "#16A34A !important"
+                    : "#64748B !important",
+                },
+              }}
+            />
+          </Stack>
+        </Box>
       )}
 
       {["meeting", "task", "report"].includes(
@@ -1292,7 +1537,10 @@ const Agents = () => {
                 variant="contained"
                 size="large"
                 onClick={runAgent}
-                disabled={loading}
+                disabled={
+                  loading ||
+                  (selectedAgent === "voice" && isListening)
+                }
                 startIcon={
                   loading ? (
                     <CircularProgress
