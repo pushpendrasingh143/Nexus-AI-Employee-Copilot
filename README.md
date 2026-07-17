@@ -27,6 +27,18 @@ An AI-powered enterprise productivity platform that helps employees and HR teams
 
 [Open Nexus AI Employee Copilot](https://nexus-ai-employee-copilot.vercel.app/login)
 
+## 🔐 Demo Account
+
+Use the following demo credentials to explore the application:
+
+- **Live Website:** https://nexus-ai-employee-copilot.vercel.app/login
+- **Email:** `instructor.demo@nexusai.com`
+- **Password:** `NexusDemo@2026`
+- **Role:** Admin
+
+ This account is created only for project evaluation and demonstration purposes.
+
+
 ## GitHub Repository
 
 [View Source Code](https://github.com/pushpendrasingh143/Nexus-AI-Employee-Copilot)
