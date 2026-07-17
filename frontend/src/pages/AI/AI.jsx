@@ -22,6 +22,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 import {
   AddCommentRounded,
@@ -111,6 +112,9 @@ const formatScore = (score) => {
 };
 
 const AI = () => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
   const [mode, setMode] = useState("rag");
   const [message, setMessage] = useState("");
   const [lastQuestion, setLastQuestion] = useState("");
@@ -331,13 +335,14 @@ const AI = () => {
   const historyMessages =
     selectedSession?.messages || [];
 
-  return (
-    <Box
-      sx={{
-        width: "100%",
-        color: "#0F172A",
-      }}
-    >
+ return (
+  <Box
+    className="ai-page"
+    sx={{
+      width: "100%",
+      color: isDarkMode ? "#F8FAFC" : "#0F172A",
+    }}
+  >
       {/* Page Header */}
       <Stack
         direction={{
@@ -363,8 +368,8 @@ const AI = () => {
               height: 48,
               display: "grid",
               placeItems: "center",
-              color: "#4F46E5",
-              backgroundColor: "#EEF2FF",
+              color: isDarkMode ? "#A5B4FC" : "#4F46E5",
+              backgroundColor: isDarkMode ? "#312E81" : "#EEF2FF",
               borderRadius: 3,
             }}
           >
@@ -376,7 +381,9 @@ const AI = () => {
               variant="h4"
               fontWeight={900}
               sx={{
-                color: "#0F172A !important",
+                color: `${
+                  isDarkMode ? "#F8FAFC" : "#0F172A"
+                } !important`,
                 fontSize: {
                   xs: "1.8rem",
                   md: "2.15rem",
@@ -388,7 +395,9 @@ const AI = () => {
 
             <Typography
               sx={{
-                color: "#64748B !important",
+                color: `${
+                  isDarkMode ? "#CBD5E1" : "#64748B"
+                } !important`,
                 mt: 0.3,
               }}
             >
@@ -442,9 +451,15 @@ const AI = () => {
             },
             p: 2,
             borderRadius: 4,
-            border: "1px solid #E2E8F0",
-            color: "#0F172A !important",
-            backgroundColor: "#FFFFFF !important",
+            border: `1px solid ${
+              isDarkMode ? "#334155" : "#E2E8F0"
+            }`,
+            color: `${
+              isDarkMode ? "#F8FAFC" : "#0F172A"
+            } !important`,
+            backgroundColor: `${
+              isDarkMode ? "#1E293B" : "#FFFFFF"
+            } !important`,
             flexShrink: 0,
             overflow: "hidden",
           }}
@@ -470,7 +485,9 @@ const AI = () => {
                 <Typography
                   fontWeight={900}
                   sx={{
-                    color: "#0F172A !important",
+                    color: `${
+                      isDarkMode ? "#F8FAFC" : "#0F172A"
+                    } !important`,
                   }}
                 >
                   Chat History
@@ -478,7 +495,9 @@ const AI = () => {
 
                 <Typography
                   sx={{
-                    color: "#64748B !important",
+                    color: `${
+                      isDarkMode ? "#CBD5E1" : "#64748B"
+                    } !important`,
                     fontSize: 11,
                   }}
                 >
@@ -493,8 +512,12 @@ const AI = () => {
                 disabled={historyLoading}
                 size="small"
                 sx={{
-                  color: "#4F46E5 !important",
-                  backgroundColor: "#EEF2FF !important",
+                  color: `${
+                    isDarkMode ? "#C7D2FE" : "#4F46E5"
+                  } !important`,
+                  backgroundColor: `${
+                    isDarkMode ? "#312E81" : "#EEF2FF"
+                  } !important`,
                 }}
               >
                 {historyLoading ? (
@@ -509,7 +532,9 @@ const AI = () => {
           <Divider
             sx={{
               mb: 1.5,
-              borderColor: "#E2E8F0",
+              borderColor: isDarkMode
+                ? "#334155"
+                : "#E2E8F0",
             }}
           />
 
@@ -552,7 +577,9 @@ const AI = () => {
                 <Typography
                   fontWeight={800}
                   sx={{
-                    color: "#334155 !important",
+                    color: `${
+                      isDarkMode ? "#E2E8F0" : "#334155"
+                    } !important`,
                     mt: 1,
                   }}
                 >
@@ -561,7 +588,9 @@ const AI = () => {
 
                 <Typography
                   sx={{
-                    color: "#64748B !important",
+                    color: `${
+                      isDarkMode ? "#94A3B8" : "#64748B"
+                    } !important`,
                     fontSize: 12,
                     mt: 0.5,
                   }}
@@ -579,6 +608,9 @@ const AI = () => {
                   return (
                     <Paper
                       key={session.id}
+                      className={`ai-history-item ${
+                        isSelected ? "active" : ""
+                      }`}
                       elevation={0}
                       sx={{
                         display: "flex",
@@ -587,13 +619,26 @@ const AI = () => {
                         borderRadius: 2.5,
                         border: isSelected
                           ? "1px solid #818CF8"
-                          : "1px solid #E2E8F0",
+                          : `1px solid ${
+                              isDarkMode
+                                ? "#475569"
+                                : "#E2E8F0"
+                            }`,
                         backgroundColor: isSelected
-                          ? "#EEF2FF !important"
-                          : "#FFFFFF !important",
+                          ? `${
+                              isDarkMode
+                                ? "#312E81"
+                                : "#EEF2FF"
+                            } !important`
+                          : `${
+                              isDarkMode
+                                ? "#1E293B"
+                                : "#FFFFFF"
+                            } !important`,
                       }}
                     >
                       <ButtonBase
+                        className="ai-history-button"
                         onClick={() =>
                           loadSession(session.id)
                         }
@@ -603,10 +648,24 @@ const AI = () => {
                           p: 1.4,
                           textAlign: "left",
                           display: "block",
+                          color: isDarkMode
+                            ? "#F8FAFC"
+                            : "#0F172A",
 
                           "&:hover": {
-                            backgroundColor:
-                              "#F8FAFF !important",
+                            backgroundColor: `${
+                              isDarkMode
+                                ? "#334155"
+                                : "#F8FAFF"
+                            } !important`,
+                          },
+
+                          "&:hover .MuiTypography-root": {
+                            color: `${
+                              isDarkMode
+                                ? "#FFFFFF"
+                                : "#0F172A"
+                            } !important`,
                           },
                         }}
                       >
@@ -614,8 +673,16 @@ const AI = () => {
                           noWrap
                           sx={{
                             color: isSelected
-                              ? "#4338CA !important"
-                              : "#0F172A !important",
+                              ? `${
+                                  isDarkMode
+                                    ? "#FFFFFF"
+                                    : "#4338CA"
+                                } !important`
+                              : `${
+                                  isDarkMode
+                                    ? "#F8FAFC"
+                                    : "#0F172A"
+                                } !important`,
                             fontWeight: 800,
                             fontSize: 13,
                           }}
@@ -627,7 +694,11 @@ const AI = () => {
                         <Typography
                           noWrap
                           sx={{
-                            color: "#64748B !important",
+                            color: `${
+                              isDarkMode
+                                ? "#CBD5E1"
+                                : "#64748B"
+                            } !important`,
                             fontSize: 10,
                             mt: 0.5,
                           }}
@@ -654,8 +725,11 @@ const AI = () => {
                             color: "#DC2626 !important",
 
                             "&:hover": {
-                              backgroundColor:
-                                "#FEF2F2 !important",
+                              backgroundColor: `${
+                                isDarkMode
+                                  ? "rgba(220,38,38,0.16)"
+                                  : "#FEF2F2"
+                              } !important`,
                             },
                           }}
                         >
@@ -686,9 +760,15 @@ const AI = () => {
                 md: 3,
               },
               borderRadius: 4,
-              border: "1px solid #E2E8F0",
-              color: "#0F172A !important",
-              backgroundColor: "#FFFFFF !important",
+              border: `1px solid ${
+                isDarkMode ? "#334155" : "#E2E8F0"
+              }`,
+              color: `${
+                isDarkMode ? "#F8FAFC" : "#0F172A"
+              } !important`,
+              backgroundColor: `${
+                isDarkMode ? "#1E293B" : "#FFFFFF"
+              } !important`,
             }}
           >
             <Stack
@@ -712,7 +792,9 @@ const AI = () => {
                   p: 0.6,
                   gap: 0.7,
                   borderRadius: 3,
-                  backgroundColor: "#F1F5F9",
+                  backgroundColor: isDarkMode
+                    ? "#0F172A"
+                    : "#F1F5F9",
 
                   "& .MuiToggleButton-root": {
                     px: {
@@ -720,11 +802,15 @@ const AI = () => {
                       sm: 2.5,
                     },
                     py: 0.9,
-                    color: "#475569 !important",
-                    backgroundColor:
-                      "#FFFFFF !important",
-                    border:
-                      "1px solid #E2E8F0 !important",
+                    color: `${
+                      isDarkMode ? "#E2E8F0" : "#475569"
+                    } !important`,
+                    backgroundColor: `${
+                      isDarkMode ? "#1E293B" : "#FFFFFF"
+                    } !important`,
+                    border: `1px solid ${
+                      isDarkMode ? "#475569" : "#E2E8F0"
+                    } !important`,
                     borderRadius:
                       "10px !important",
                     fontWeight: 800,
@@ -891,8 +977,12 @@ const AI = () => {
                 mt: 3,
                 p: 3,
                 borderRadius: 4,
-                border: "1px solid #E2E8F0",
-                backgroundColor: "#FFFFFF !important",
+                border: `1px solid ${
+                  isDarkMode ? "#334155" : "#E2E8F0"
+                }`,
+                backgroundColor: `${
+                  isDarkMode ? "#1E293B" : "#FFFFFF"
+                } !important`,
               }}
             >
               <Stack
@@ -918,7 +1008,9 @@ const AI = () => {
                   <Typography
                     fontWeight={900}
                     sx={{
-                      color: "#0F172A !important",
+                      color: `${
+                        isDarkMode ? "#F8FAFC" : "#0F172A"
+                      } !important`,
                     }}
                   >
                     Nexus AI is preparing your answer
@@ -926,7 +1018,9 @@ const AI = () => {
 
                   <Typography
                     sx={{
-                      color: "#64748B !important",
+                      color: `${
+                        isDarkMode ? "#CBD5E1" : "#64748B"
+                      } !important`,
                       fontSize: 13,
                       mt: 0.3,
                     }}
@@ -957,9 +1051,15 @@ const AI = () => {
                   md: 3,
                 },
                 borderRadius: 4,
-                border: "1px solid #E2E8F0",
-                color: "#0F172A !important",
-                backgroundColor: "#FFFFFF !important",
+                border: `1px solid ${
+                  isDarkMode ? "#334155" : "#E2E8F0"
+                }`,
+                color: `${
+                  isDarkMode ? "#F8FAFC" : "#0F172A"
+                } !important`,
+                backgroundColor: `${
+                  isDarkMode ? "#1E293B" : "#FFFFFF"
+                } !important`,
               }}
             >
               <Stack
@@ -973,7 +1073,9 @@ const AI = () => {
                     variant="h6"
                     fontWeight={900}
                     sx={{
-                      color: "#0F172A !important",
+                      color: `${
+                        isDarkMode ? "#F8FAFC" : "#0F172A"
+                      } !important`,
                     }}
                   >
                     {selectedSession.title ||
@@ -982,7 +1084,9 @@ const AI = () => {
 
                   <Typography
                     sx={{
-                      color: "#64748B !important",
+                      color: `${
+                        isDarkMode ? "#CBD5E1" : "#64748B"
+                      } !important`,
                       fontSize: 12,
                       mt: 0.3,
                     }}
@@ -1002,7 +1106,9 @@ const AI = () => {
               <Divider
                 sx={{
                   my: 2.5,
-                  borderColor: "#E2E8F0",
+                  borderColor: isDarkMode
+                    ? "#334155"
+                    : "#E2E8F0",
                 }}
               />
 
@@ -1061,10 +1167,18 @@ const AI = () => {
                                 : "18px 18px 18px 4px",
                               backgroundColor: isUser
                                 ? "#4F46E5 !important"
-                                : "#F8FAFC !important",
+                                : `${
+                                    isDarkMode
+                                      ? "#0F172A"
+                                      : "#F8FAFC"
+                                  } !important`,
                               border: isUser
                                 ? "1px solid #4F46E5"
-                                : "1px solid #E2E8F0",
+                                : `1px solid ${
+                                    isDarkMode
+                                      ? "#475569"
+                                      : "#E2E8F0"
+                                  }`,
                             }}
                           >
                             <Stack
@@ -1078,7 +1192,11 @@ const AI = () => {
                                 sx={{
                                   color: isUser
                                     ? "rgba(255,255,255,0.78) !important"
-                                    : "#4F46E5 !important",
+                                    : `${
+                                        isDarkMode
+                                          ? "#A5B4FC"
+                                          : "#4F46E5"
+                                      } !important`,
                                   fontSize: 11,
                                   fontWeight: 900,
                                 }}
@@ -1118,7 +1236,11 @@ const AI = () => {
                               sx={{
                                 color: isUser
                                   ? "#FFFFFF !important"
-                                  : "#0F172A !important",
+                                  : `${
+                                      isDarkMode
+                                        ? "#F8FAFC"
+                                        : "#0F172A"
+                                    } !important`,
                                 fontSize: 14,
                                 lineHeight: 1.7,
                                 whiteSpace: "pre-wrap",
@@ -1150,10 +1272,15 @@ const AI = () => {
                     md: 3,
                   },
                   borderRadius: 4,
-                  border: "1px solid #E2E8F0",
-                  color: "#0F172A !important",
-                  backgroundColor:
-                    "#FFFFFF !important",
+                  border: `1px solid ${
+                    isDarkMode ? "#334155" : "#E2E8F0"
+                  }`,
+                  color: `${
+                    isDarkMode ? "#F8FAFC" : "#0F172A"
+                  } !important`,
+                  backgroundColor: `${
+                    isDarkMode ? "#1E293B" : "#FFFFFF"
+                  } !important`,
                 }}
               >
                 {lastQuestion && (
@@ -1219,9 +1346,12 @@ const AI = () => {
                       p: 2.2,
                       borderRadius:
                         "18px 18px 18px 4px",
-                      border: "1px solid #E2E8F0",
-                      backgroundColor:
-                        "#F8FAFC !important",
+                      border: `1px solid ${
+                        isDarkMode ? "#475569" : "#E2E8F0"
+                      }`,
+                      backgroundColor: `${
+                        isDarkMode ? "#0F172A" : "#F8FAFC"
+                      } !important`,
                     }}
                   >
                     <Stack
@@ -1245,8 +1375,11 @@ const AI = () => {
                         <Typography
                           fontWeight={900}
                           sx={{
-                            color:
-                              "#0F172A !important",
+                            color: `${
+                              isDarkMode
+                                ? "#F8FAFC"
+                                : "#0F172A"
+                            } !important`,
                           }}
                         >
                           Nexus AI
@@ -1260,12 +1393,21 @@ const AI = () => {
                             handleCopy(reply)
                           }
                           sx={{
-                            color:
-                              "#64748B !important",
-                            backgroundColor:
-                              "#FFFFFF !important",
-                            border:
-                              "1px solid #E2E8F0",
+                            color: `${
+                              isDarkMode
+                                ? "#CBD5E1"
+                                : "#64748B"
+                            } !important`,
+                            backgroundColor: `${
+                              isDarkMode
+                                ? "#1E293B"
+                                : "#FFFFFF"
+                            } !important`,
+                            border: `1px solid ${
+                              isDarkMode
+                                ? "#475569"
+                                : "#E2E8F0"
+                            }`,
                           }}
                         >
                           <ContentCopyRounded fontSize="small" />
@@ -1275,7 +1417,9 @@ const AI = () => {
 
                     <Typography
                       sx={{
-                        color: "#0F172A !important",
+                        color: `${
+                          isDarkMode ? "#F8FAFC" : "#0F172A"
+                        } !important`,
                         whiteSpace: "pre-wrap",
                         lineHeight: 1.75,
                         wordBreak: "break-word",
@@ -1312,8 +1456,11 @@ const AI = () => {
                           variant="h6"
                           fontWeight={900}
                           sx={{
-                            color:
-                              "#0F172A !important",
+                            color: `${
+                              isDarkMode
+                                ? "#F8FAFC"
+                                : "#0F172A"
+                            } !important`,
                           }}
                         >
                           Retrieved Sources
@@ -1321,8 +1468,11 @@ const AI = () => {
 
                         <Typography
                           sx={{
-                            color:
-                              "#64748B !important",
+                            color: `${
+                              isDarkMode
+                                ? "#CBD5E1"
+                                : "#64748B"
+                            } !important`,
                             fontSize: 12,
                           }}
                         >
@@ -1353,12 +1503,21 @@ const AI = () => {
                               sx={{
                                 p: 2,
                                 borderRadius: 3,
-                                border:
-                                  "1px solid #E2E8F0",
-                                color:
-                                  "#0F172A !important",
-                                backgroundColor:
-                                  "#FFFFFF !important",
+                                border: `1px solid ${
+                                  isDarkMode
+                                    ? "#475569"
+                                    : "#E2E8F0"
+                                }`,
+                                color: `${
+                                  isDarkMode
+                                    ? "#F8FAFC"
+                                    : "#0F172A"
+                                } !important`,
+                                backgroundColor: `${
+                                  isDarkMode
+                                    ? "#0F172A"
+                                    : "#FFFFFF"
+                                } !important`,
                               }}
                             >
                               <Stack
@@ -1405,8 +1564,11 @@ const AI = () => {
                                     noWrap
                                     sx={{
                                       maxWidth: 240,
-                                      color:
-                                        "#64748B !important",
+                                      color: `${
+                                        isDarkMode
+                                          ? "#CBD5E1"
+                                          : "#64748B"
+                                      } !important`,
                                       fontSize: 12,
                                       fontWeight: 700,
                                     }}
@@ -1440,8 +1602,11 @@ const AI = () => {
 
                               <Typography
                                 sx={{
-                                  color:
-                                    "#334155 !important",
+                                  color: `${
+                                    isDarkMode
+                                      ? "#E2E8F0"
+                                      : "#334155"
+                                  } !important`,
                                   mt: 1.5,
                                   fontSize: 13,
                                   lineHeight: 1.65,
@@ -1474,14 +1639,18 @@ const AI = () => {
         PaperProps={{
           sx: {
             borderRadius: 4,
-            color: "#0F172A",
-            backgroundColor: "#FFFFFF !important",
+            color: isDarkMode ? "#F8FAFC" : "#0F172A",
+            backgroundColor: `${
+              isDarkMode ? "#1E293B" : "#FFFFFF"
+            } !important`,
           },
         }}
       >
         <DialogTitle
           sx={{
-            color: "#0F172A !important",
+            color: `${
+              isDarkMode ? "#F8FAFC" : "#0F172A"
+            } !important`,
             fontWeight: 900,
           }}
         >
@@ -1514,7 +1683,9 @@ const AI = () => {
             onClick={closeDeleteDialog}
             disabled={deleting}
             sx={{
-              color: "#475569 !important",
+              color: `${
+                isDarkMode ? "#CBD5E1" : "#475569"
+              } !important`,
               fontWeight: 800,
               textTransform: "none",
             }}

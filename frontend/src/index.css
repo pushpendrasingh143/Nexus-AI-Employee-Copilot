@@ -306,3 +306,184 @@ html[data-theme="dark"] *::-webkit-scrollbar-thumb {
   background: #475569;
   border-radius: 10px;
 }
+
+/* Dark mode table header visibility fix */
+
+html[data-theme="dark"] body .MuiTableHead-root,
+html[data-theme="dark"] body .MuiTableHead-root .MuiTableRow-root {
+  background: #0f172a !important;
+}
+
+html[data-theme="dark"] body .MuiTableHead-root .MuiTableCell-root {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme="dark"] body .MuiTableHead-root .MuiTableCell-root strong {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] body .MuiTableBody-root .MuiTableCell-root {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] body .MuiTableRow-root {
+  background: #1e293b !important;
+}
+
+html[data-theme="dark"] body .MuiTableRow-root:hover {
+  background: #273449 !important;
+}
+
+html[data-theme="dark"] body .MuiChip-root {
+  color: #0f172a;
+}
+
+html[data-theme="dark"] body .MuiButton-root {
+  color: inherit;
+}
+
+html[data-theme="dark"] body .MuiButton-outlined {
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+/* =====================================================
+   DARK MODE — NESTED WHITE BOX VISIBILITY FIX
+===================================================== */
+
+/* Upload area, response area and sections placed after divider */
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  > .MuiDivider-root
+  + .MuiBox-root,
+html[data-theme="dark"]
+  body
+  .MuiCard-root
+  > .MuiDivider-root
+  + .MuiBox-root {
+  background: #0f172a !important;
+  background-image: none !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+/* Text inside upload and response boxes */
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  > .MuiDivider-root
+  + .MuiBox-root
+  .MuiTypography-root,
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  > .MuiDivider-root
+  + .MuiBox-root
+  pre {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+/* Dashboard Quick Actions and similar text buttons */
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  .MuiButton-root:not(.MuiButton-contained):not(
+    .MuiButton-colorError
+  ) {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  .MuiButton-root:not(.MuiButton-contained):not(
+    .MuiButton-colorError
+  )
+  .MuiTypography-root {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  .MuiButton-root:not(.MuiButton-contained):not(
+    .MuiButton-colorError
+  ):hover {
+  background: #1e293b !important;
+  border-color: #818cf8 !important;
+}
+
+/* Chat history items */
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  .MuiListItemButton-root {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  .MuiListItemButton-root
+  .MuiTypography-root {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root:not(.MuiDrawer-paper)
+  .MuiListItemButton-root:hover {
+  background: #273449 !important;
+}
+
+/* Agent and AI response output */
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root
+  .MuiBox-root:has(> pre.MuiTypography-root) {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiPaper-root
+  .MuiBox-root:has(> pre.MuiTypography-root)
+  pre {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
+
+/* File-upload input area */
+
+html[data-theme="dark"]
+  body
+  .MuiBox-root:has(input[type="file"]) {
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #64748b !important;
+}
+
+html[data-theme="dark"]
+  body
+  .MuiBox-root:has(input[type="file"])
+  .MuiTypography-root {
+  color: #f8fafc !important;
+  -webkit-text-fill-color: #f8fafc !important;
+}
