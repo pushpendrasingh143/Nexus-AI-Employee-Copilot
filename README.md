@@ -5,29 +5,31 @@ An AI-powered enterprise productivity platform that helps employees and HR teams
 ## Team
 
 **Team Name:** Ultra Legends  
-**Team Size:** 4 Members  
+**Team Size:** 4 Members
 
 ### Team Members
 
 1. Pushpendra Singh
-2. Rahuk kumar jha
-3. Ibran ansari
-4. Chhote kumar
+2. Rahul Kumar Jha
+3. Ibran Ansari
+4. Chhote Kumar
 
 ## Team Contributions
 
 | Team Member | Responsibility |
 |---|---|
 | Pushpendra Singh | Backend Development, Database and Deployment |
-| Rahul kumar jha | Frontend Development and UI |
-| Ibran ansari | AI, RAG and Gemini Integration |
-| Chhote kumar | Testing, Documentation and Presentation |
-
+| Rahul Kumar Jha | Frontend Development and UI |
+| Ibran Ansari | AI, RAG and Gemini Integration |
+| Chhote Kumar | Testing, Documentation and Presentation |
 
 ## Live Application
 
-[Open Nexus AI Employee Copilot](<img width="1251" height="664" alt="WhatsApp Image 2026-07-15 at 4 32 54 PM" src="https://github.com/user-attachments/assets/0724b1b4-4515-40e5-868a-3674530c46bb" /><img width="1251" height="664" alt="WhatsApp Image 2026-07-15 at 4 32 54 PM" src="https://github.com/user-attachments/assets/e59a9c9a-95b0-44de-8ceb-73d0f4119577" />
-)
+[Open Nexus AI Employee Copilot](https://nexus-ai-employee-copilot.vercel.app/login)
+
+## GitHub Repository
+
+[View Source Code](https://github.com/pushpendrasingh143/Nexus-AI-Employee-Copilot)
 
 ## Problem Statement
 
@@ -45,7 +47,9 @@ Nexus AI Employee Copilot provides a centralized AI-powered platform where organ
 - Ask questions based on uploaded documents
 - Maintain previous AI conversations
 - View dashboard and analytics data
-- Access HR-related assistance
+- Access specialized AI agents
+- Use voice commands through a browser microphone
+- Personalize the application using Light and Dark Mode
 
 The platform uses Retrieval-Augmented Generation, or RAG, to generate answers using information retrieved from uploaded company documents.
 
@@ -56,13 +60,16 @@ The platform uses Retrieval-Augmented Generation, or RAG, to generate answers us
 - Secure user registration and login
 - JWT-based authentication
 - Role-based access control
-- Employee, HR, and Admin roles
+- Employee, HR and Admin roles
+- Protected frontend routes
+- Secure browser sessions
 
 ### Employee Management
 
 - Create and manage employees
 - Assign employees to departments
 - View employee information
+- Manage organizational user records
 
 ### Department Management
 
@@ -75,8 +82,9 @@ The platform uses Retrieval-Augmented Generation, or RAG, to generate answers us
 - Upload PDF documents
 - Extract text from PDF files
 - Split documents into searchable chunks
+- Generate document embeddings
 - Store document information in PostgreSQL
-- Delete and view uploaded documents
+- View, summarize and delete uploaded documents
 
 ### AI Document Assistant
 
@@ -91,17 +99,49 @@ The platform uses Retrieval-Augmented Generation, or RAG, to generate answers us
 - Create AI chat sessions
 - Store user questions and AI responses
 - View previous conversations
+- Continue workplace AI interactions
 
-### HR Agent
+### AI Agents and Integrations
 
-- Assist with common HR-related questions
-- Provide workplace information through AI
+- HR Agent
+- Email Agent
+- Meeting Scheduler
+- Task Manager
+- Report Generator
+- Knowledge Agent
+- Voice Assistant
+- Google Workspace integration demo
+- Microsoft 365 integration demo
+- Slack and Microsoft Teams collaboration
+- System Status
+- Feature Registry
+
+### Voice Assistant
+
+- Browser microphone support
+- Convert spoken commands into text
+- Start and stop voice recognition
+- Review and edit generated transcripts
+- Process voice commands using AI
+- Generate structured workplace responses
+- Display microphone permission and speech recognition errors
+
+### Settings and Theme
+
+- User account and session information
+- Application preference management
+- Complete Light and Dark Mode
+- Saved theme preference using localStorage
+- Theme remains active after page refresh
+- Reset application preferences
+- Secure logout confirmation
 
 ### Dashboard and Analytics
 
 - Employee statistics
 - Department statistics
 - Document statistics
+- Document chunk statistics
 - Application activity overview
 
 ## Target Users
@@ -143,15 +183,97 @@ Neon PostgreSQL + Vector Data
 Google Gemini AI
   ↓
 RAG-Based Response
+```
+
+## Technology Stack
+
+### Frontend
+
+- React
+- Vite
+- Material UI
+- React Router
+- Axios
+- React Hot Toast
+- Web Speech API
+
+### Backend
+
+- Node.js
+- Express.js
+- CommonJS architecture
+- JWT Authentication
+- Multer
+- PDF text extraction
+
+### Database and ORM
+
+- PostgreSQL
+- Neon PostgreSQL
+- Prisma ORM
+- Vector embeddings
+
+### Artificial Intelligence
+
+- Google Gemini
+- LangChain
+- Retrieval-Augmented Generation
+- Document chunking
+- Semantic knowledge search
+
+### Deployment
+
+- Vercel for frontend
+- Render for backend
+- Neon for production database
+- GitHub for source control
 
 ## Application Screenshots
 
 ### Login Page
-<img width="1251" height="664" alt="WhatsApp Image 2026-07-15 at 4 32 54 PM" src="https://github.com/user-attachments/assets/11af193e-763c-4322-bf30-38583ef21c9a" />
+
+<img width="1362" height="728" alt="WhatsApp Image 2026-07-17 at 5 25 09 PM" src="https://github.com/user-attachments/assets/11796f61-26af-48a3-a1d8-e54767467ff3" />
+
+
 ### Dashboard
-<img width="1366" height="728" alt="WhatsApp Image 2026-07-15 at 4 34 02 PM" src="https://github.com/user-attachments/assets/a68194f1-68b4-4339-92a5-d2ad61c740c3" />
+
+<img width="1366" height="729" alt="WhatsApp Image 2026-07-17 at 5 26 14 PM" src="https://github.com/user-attachments/assets/dec8ee8d-a580-4e6f-a08c-dd9ed870dcdb" />
+
+
 ### Document Management
-<img width="1366" height="735" alt="WhatsApp Image 2026-07-15 at 4 40 05 PM" src="https://github.com/user-attachments/assets/763b9f54-3674-419c-b0f1-ff6b4ac80a11" />
+
+<img width="1366" height="719" alt="WhatsApp Image 2026-07-17 at 5 26 51 PM" src="https://github.com/user-attachments/assets/d91bf1d4-3169-432a-8652-e9bc0dc940c0" />
+
 
 ### AI Document Assistant
-<img width="1366" height="684" alt="WhatsApp Image 2026-07-15 at 4 42 29 PM" src="https://github.com/user-attachments/assets/eaaaf8a6-61e4-4bdf-b79a-78364977d4c4" />
+
+<img width="1366" height="728" alt="WhatsApp Image 2026-07-17 at 5 27 25 PM" src="https://github.com/user-attachments/assets/efadf43a-8f24-4cf3-85f1-02c85562b2e3" />
+
+## Recent Updates
+
+- Added browser microphone support to the Voice Assistant
+- Added complete Light and Dark Mode support
+- Added Settings navigation and preference management
+- Added persistent theme preference using localStorage
+- Improved sidebar navigation
+- Improved dashboard and AI Agents user interface
+- Added protected and public route handling
+- Improved authentication session handling
+
+## Future Enhancements
+
+- Real Gmail and Google Calendar integration
+- Real Microsoft Outlook and Teams integration
+- Real Slack workspace integration
+- Advanced role-based permissions
+- Real-time employee notifications
+- Mobile navigation improvements
+- Multiple voice input languages
+- Advanced AI usage analytics
+- Automated workplace workflows
+
+## Project Status
+
+**Version:** 1.0.0  
+**Status:** Demo Ready  
+**Category:** AI-Powered Enterprise Productivity Platform
