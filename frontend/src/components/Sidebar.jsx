@@ -5,6 +5,7 @@ import {
   DescriptionRounded,
   SmartToyRounded,
   AutoAwesomeRounded,
+  SettingsRounded,
   LogoutRounded,
   RocketLaunchRounded,
 } from "@mui/icons-material";
@@ -58,7 +59,13 @@ const menuItems = [
     title: "AI Agents",
     path: "/agents",
     icon: <AutoAwesomeRounded />,
+    SettingsRounded,
   },
+  {
+  title: "Settings",
+  path: "/settings",
+  icon: <SettingsRounded />,
+},
 ];
 
 const Sidebar = () => {
