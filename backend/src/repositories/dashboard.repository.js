@@ -2,22 +2,28 @@ const prisma = require("../config/prisma");
 
 const getDashboardStats = async () => {
   const [
-    totalEmployees,
-    totalDepartments,
-    totalDocuments,
-    totalChunks,
+    employees,
+    departments,
+    documents,
+    aiRequests,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.department.count(),
     prisma.document.count(),
-    prisma.documentChunk.count(),
+
+    // Har user message ko ek AI request maana jayega
+    prisma.chatMessage.count({
+      where: {
+        role: "user",
+      },
+    }),
   ]);
 
   return {
-    totalEmployees,
-    totalDepartments,
-    totalDocuments,
-    totalChunks,
+    employees,
+    departments,
+    documents,
+    aiRequests,
   };
 };
 

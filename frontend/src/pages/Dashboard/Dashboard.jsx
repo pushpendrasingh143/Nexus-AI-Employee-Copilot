@@ -45,17 +45,19 @@ const Dashboard = () => {
   }, []);
 
   const loadDashboard = async () => {
-    try {
-      const data = await getDashboardStats();
+  try {
+    const data = await getDashboardStats();
 
-      setStats({
-        ...data,
-        aiRequests: 0,
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    setStats({
+      employees: data.employees ?? 0,
+      departments: data.departments ?? 0,
+      documents: data.documents ?? 0,
+      aiRequests: data.aiRequests ?? 0,
+    });
+  } catch (error) {
+    console.error("Dashboard stats error:", error);
+  }
+};
 
   const chartData = [
     {
