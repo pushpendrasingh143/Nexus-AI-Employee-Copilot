@@ -1,23 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import {
+  Alert,
   Box,
-  Paper,
-  Typography,
-  TextField,
   Button,
+  ButtonBase,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  IconButton,
+  Paper,
+  Stack,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
-  CircularProgress,
-  Chip,
-  Divider,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 
-import SmartToyIcon from "@mui/icons-material/SmartToy";
-import SendIcon from "@mui/icons-material/Send";
-import HistoryIcon from "@mui/icons-material/History";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import {
+  AddCommentRounded,
+  AutoAwesomeRounded,
+  ContentCopyRounded,
+  DeleteOutlineRounded,
+  DescriptionRounded,
+  HistoryRounded,
+  RefreshRounded,
+  SendRounded,
+  SmartToyRounded,
+} from "@mui/icons-material";
 
 import {
   chatWithAI,
@@ -27,19 +43,110 @@ import {
 import {
   getChatSessions,
   getChatSessionById,
+  deleteChatSession,
 } from "../../services/chat.service";
+
+const fieldStyles = {
+  "& .MuiOutlinedInput-root": {
+    color: "#0F172A !important",
+    backgroundColor: "#FFFFFF !important",
+    borderRadius: 3,
+
+    "& fieldset": {
+      borderColor: "#CBD5E1",
+    },
+
+    "&:hover fieldset": {
+      borderColor: "#818CF8",
+    },
+
+    "&.Mui-focused fieldset": {
+      borderColor: "#4F46E5",
+    },
+  },
+
+  "& .MuiInputBase-input": {
+    color: "#0F172A !important",
+  },
+
+  "& textarea": {
+    color: "#0F172A !important",
+  },
+};
+
+const formatDate = (value) => {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatScore = (score) => {
+  const numericScore = Number(score);
+
+  if (!Number.isFinite(numericScore)) {
+    return null;
+  }
+
+  const percentage =
+    numericScore <= 1
+      ? numericScore * 100
+      : numericScore;
+
+  return `${Math.min(
+    Math.max(percentage, 0),
+    100
+  ).toFixed(0)}% match`;
+};
 
 const AI = () => {
   const [mode, setMode] = useState("rag");
   const [message, setMessage] = useState("");
+  const [lastQuestion, setLastQuestion] = useState("");
   const [reply, setReply] = useState("");
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [sessions, setSessions] = useState([]);
-  const [selectedSession, setSelectedSession] = useState(null);
-  const [selectedSessionId, setSelectedSessionId] = useState(null);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  const [selectedSession, setSelectedSession] =
+    useState(null);
+  const [selectedSessionId, setSelectedSessionId] =
+    useState(null);
+
+  const [historyLoading, setHistoryLoading] =
+    useState(false);
+  const [sessionLoading, setSessionLoading] =
+    useState(false);
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] =
+    useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((first, second) => {
+      const firstDate = new Date(
+        first.updatedAt || first.createdAt || 0
+      ).getTime();
+
+      const secondDate = new Date(
+        second.updatedAt || second.createdAt || 0
+      ).getTime();
+
+      return secondDate - firstDate;
+    });
+  }, [sessions]);
 
   const loadSessions = async () => {
     try {
@@ -52,7 +159,8 @@ const AI = () => {
       console.error("History load error:", error);
 
       toast.error(
-        error.response?.data?.message || "Failed to load chat history"
+        error.response?.data?.message ||
+          "Failed to load chat history"
       );
     } finally {
       setHistoryLoading(false);
@@ -61,22 +169,26 @@ const AI = () => {
 
   const loadSession = async (sessionId) => {
     try {
-      setHistoryLoading(true);
+      setSessionLoading(true);
       setSelectedSessionId(sessionId);
 
       const data = await getChatSessionById(sessionId);
 
       setSelectedSession(data);
       setReply("");
+      setLastQuestion("");
       setSources([]);
     } catch (error) {
       console.error("Session load error:", error);
 
       toast.error(
-        error.response?.data?.message || "Failed to open chat"
+        error.response?.data?.message ||
+          "Failed to open conversation"
       );
+
+      setSelectedSessionId(null);
     } finally {
-      setHistoryLoading(false);
+      setSessionLoading(false);
     }
   };
 
@@ -84,27 +196,53 @@ const AI = () => {
     loadSessions();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleNewChat = () => {
+    setSelectedSession(null);
+    setSelectedSessionId(null);
+    setLastQuestion("");
+    setReply("");
+    setSources([]);
+    setMessage("");
+  };
+
+  const handleModeChange = (event, value) => {
+    if (!value) return;
+
+    setMode(value);
+    handleNewChat();
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     const trimmedMessage = message.trim();
 
     if (!trimmedMessage || loading) return;
 
-    setLoading(true);
-    setReply("");
-    setSources([]);
-    setSelectedSession(null);
-    setSelectedSessionId(null);
-
     try {
-      if (mode === "rag") {
-        const response = await askDocumentAI(trimmedMessage);
+      setLoading(true);
+      setLastQuestion(trimmedMessage);
+      setReply("");
+      setSources([]);
+      setSelectedSession(null);
+      setSelectedSessionId(null);
 
-        setReply(response.answer || "No answer received.");
-        setSources(response.sources || []);
+      if (mode === "rag") {
+        const response =
+          await askDocumentAI(trimmedMessage);
+
+        setReply(
+          response?.answer || "No answer received."
+        );
+
+        setSources(
+          Array.isArray(response?.sources)
+            ? response.sources
+            : []
+        );
       } else {
-        const response = await chatWithAI(trimmedMessage);
+        const response =
+          await chatWithAI(trimmedMessage);
 
         setReply(response || "No response received.");
         setSources([]);
@@ -112,30 +250,176 @@ const AI = () => {
 
       setMessage("");
 
-      // Database se updated history dobara load karega
       await loadSessions();
     } catch (error) {
-      console.error("AI error:", error);
+      console.error("AI request error:", error);
 
       toast.error(
-        error.response?.data?.message || "AI Error"
+        error.response?.data?.message ||
+          "AI request failed"
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const historyMessages = selectedSession?.messages || [];
+  const handleKeyboardSubmit = (event) => {
+    if (
+      event.key === "Enter" &&
+      (event.ctrlKey || event.metaKey)
+    ) {
+      handleSubmit(event);
+    }
+  };
+
+  const handleCopy = async (content) => {
+    if (!content) return;
+
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Answer copied");
+    } catch (error) {
+      console.error("Copy error:", error);
+      toast.error("Unable to copy answer");
+    }
+  };
+
+  const openDeleteDialog = (event, session) => {
+    event.stopPropagation();
+
+    setSessionToDelete(session);
+    setDeleteOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    if (deleting) return;
+
+    setDeleteOpen(false);
+    setSessionToDelete(null);
+  };
+
+  const handleDeleteSession = async () => {
+    if (!sessionToDelete?.id || deleting) return;
+
+    try {
+      setDeleting(true);
+
+      await deleteChatSession(sessionToDelete.id);
+
+      toast.success("Conversation deleted");
+
+      if (selectedSessionId === sessionToDelete.id) {
+        handleNewChat();
+      }
+
+      setDeleteOpen(false);
+      setSessionToDelete(null);
+
+      await loadSessions();
+    } catch (error) {
+      console.error("Delete session error:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to delete conversation"
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const historyMessages =
+    selectedSession?.messages || [];
 
   return (
-    <Box>
-      <Typography variant="h4" fontWeight="bold" mb={1}>
-        Nexus AI Assistant
-      </Typography>
+    <Box
+      sx={{
+        width: "100%",
+        color: "#0F172A",
+      }}
+    >
+      {/* Page Header */}
+      <Stack
+        direction={{
+          xs: "column",
+          sm: "row",
+        }}
+        justifyContent="space-between"
+        alignItems={{
+          xs: "flex-start",
+          sm: "center",
+        }}
+        gap={2}
+        mb={3}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap={1.3}
+        >
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              display: "grid",
+              placeItems: "center",
+              color: "#4F46E5",
+              backgroundColor: "#EEF2FF",
+              borderRadius: 3,
+            }}
+          >
+            <SmartToyRounded />
+          </Box>
 
-      <Typography color="text.secondary" mb={3}>
-        Chat with AI or ask questions from uploaded documents.
-      </Typography>
+          <Box>
+            <Typography
+              variant="h4"
+              fontWeight={900}
+              sx={{
+                color: "#0F172A !important",
+                fontSize: {
+                  xs: "1.8rem",
+                  md: "2.15rem",
+                },
+              }}
+            >
+              Nexus AI Assistant
+            </Typography>
+
+            <Typography
+              sx={{
+                color: "#64748B !important",
+                mt: 0.3,
+              }}
+            >
+              Search company knowledge or use the
+              general workplace assistant.
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Button
+          onClick={handleNewChat}
+          startIcon={<AddCommentRounded />}
+          sx={{
+            color: "#FFFFFF !important",
+            background:
+              "linear-gradient(135deg, #4F46E5, #7C3AED) !important",
+            borderRadius: 2.5,
+            px: 2.3,
+            py: 1,
+            fontWeight: 800,
+            textTransform: "none",
+
+            "&:hover": {
+              background:
+                "linear-gradient(135deg, #4338CA, #6D28D9) !important",
+            },
+          }}
+        >
+          New Chat
+        </Button>
+      </Stack>
 
       <Box
         sx={{
@@ -148,306 +432,1128 @@ const AI = () => {
           },
         }}
       >
-        {/* Chat History */}
+        {/* History Panel */}
         <Paper
+          elevation={0}
           sx={{
             width: {
               xs: "100%",
-              lg: 290,
+              lg: 310,
             },
             p: 2,
-            borderRadius: 3,
-            maxHeight: 650,
-            overflowY: "auto",
+            borderRadius: 4,
+            border: "1px solid #E2E8F0",
+            color: "#0F172A !important",
+            backgroundColor: "#FFFFFF !important",
             flexShrink: 0,
+            overflow: "hidden",
           }}
         >
-          <Box
-            display="flex"
+          <Stack
+            direction="row"
             alignItems="center"
             justifyContent="space-between"
-            mb={1}
+            mb={1.5}
           >
-            <Box display="flex" alignItems="center" gap={1}>
-              <HistoryIcon color="primary" />
-
-              <Typography fontWeight="bold">
-                Chat History
-              </Typography>
-            </Box>
-
-            <Button
-              size="small"
-              onClick={loadSessions}
-              disabled={historyLoading}
-              sx={{ minWidth: 35 }}
+            <Stack
+              direction="row"
+              alignItems="center"
+              gap={1}
             >
-              {historyLoading ? (
-                <CircularProgress size={18} />
-              ) : (
-                <RefreshIcon fontSize="small" />
-              )}
-            </Button>
-          </Box>
-
-          <Divider sx={{ mb: 2 }} />
-
-          {sessions.length === 0 && !historyLoading ? (
-            <Typography color="text.secondary" fontSize={14}>
-              No saved conversations found.
-            </Typography>
-          ) : (
-            sessions.map((session) => (
-              <Button
-                key={session.id}
-                fullWidth
-                onClick={() => loadSession(session.id)}
+              <HistoryRounded
                 sx={{
-                  display: "block",
-                  textAlign: "left",
-                  textTransform: "none",
-                  color: "#111827",
-                  mb: 1,
-                  p: 1.5,
-                  borderRadius: 2,
-                  border:
-                    selectedSessionId === session.id
-                      ? "2px solid #4f46e5"
-                      : "1px solid #d1d5db",
-                  backgroundColor:
-                    selectedSessionId === session.id
-                      ? "#eef2ff"
-                      : "#ffffff",
+                  color: "#4F46E5",
                 }}
-              >
+              />
+
+              <Box>
                 <Typography
-                  fontWeight={600}
-                  fontSize={14}
-                  noWrap
+                  fontWeight={900}
+                  sx={{
+                    color: "#0F172A !important",
+                  }}
                 >
-                  {session.title || "Untitled Chat"}
+                  Chat History
                 </Typography>
 
-                {session.createdAt && (
-                  <Typography
-                    fontSize={11}
-                    color="text.secondary"
-                    mt={0.5}
-                  >
-                    {new Date(
-                      session.createdAt
-                    ).toLocaleString()}
-                  </Typography>
-                )}
-              </Button>
-            ))
-          )}
-        </Paper>
+                <Typography
+                  sx={{
+                    color: "#64748B !important",
+                    fontSize: 11,
+                  }}
+                >
+                  {sessions.length} saved conversations
+                </Typography>
+              </Box>
+            </Stack>
 
-        {/* AI Main Section */}
-        <Box sx={{ flex: 1, width: "100%", minWidth: 0 }}>
-          <ToggleButtonGroup
-            exclusive
-            value={mode}
-            onChange={(e, value) => {
-              if (value) {
-                setMode(value);
-                setReply("");
-                setSources([]);
-                setSelectedSession(null);
-                setSelectedSessionId(null);
-              }
-            }}
+            <Tooltip title="Refresh history">
+              <IconButton
+                onClick={loadSessions}
+                disabled={historyLoading}
+                size="small"
+                sx={{
+                  color: "#4F46E5 !important",
+                  backgroundColor: "#EEF2FF !important",
+                }}
+              >
+                {historyLoading ? (
+                  <CircularProgress size={17} />
+                ) : (
+                  <RefreshRounded fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          </Stack>
+
+          <Divider
             sx={{
-              mb: 3,
-              backgroundColor: "#e5e7eb",
-              borderRadius: "12px",
-              padding: "6px",
-              gap: "8px",
-              "& .MuiToggleButton-root": {
-                color: "#111827",
-                backgroundColor: "#ffffff",
-                border: "1px solid #cbd5e1",
-                borderRadius: "10px",
-                px: 3,
-                py: 1,
-                fontWeight: 700,
-                textTransform: "none",
+              mb: 1.5,
+              borderColor: "#E2E8F0",
+            }}
+          />
+
+          <Box
+            sx={{
+              maxHeight: {
+                xs: 310,
+                lg: 610,
               },
-              "& .MuiToggleButton-root.Mui-selected": {
-                color: "#ffffff !important",
-                backgroundColor: "#4f46e5 !important",
-              },
+              overflowY: "auto",
+              pr: 0.5,
             }}
           >
-            <ToggleButton value="rag">
-              Ask Documents
-            </ToggleButton>
+            {historyLoading &&
+            sessions.length === 0 ? (
+              <Box
+                sx={{
+                  py: 5,
+                  display: "grid",
+                  placeItems: "center",
+                }}
+              >
+                <CircularProgress size={28} />
+              </Box>
+            ) : sortedSessions.length === 0 ? (
+              <Box
+                sx={{
+                  py: 5,
+                  px: 2,
+                  textAlign: "center",
+                }}
+              >
+                <HistoryRounded
+                  sx={{
+                    color: "#CBD5E1",
+                    fontSize: 45,
+                  }}
+                />
 
-            <ToggleButton value="chat">
-              Normal Chat
-            </ToggleButton>
-          </ToggleButtonGroup>
+                <Typography
+                  fontWeight={800}
+                  sx={{
+                    color: "#334155 !important",
+                    mt: 1,
+                  }}
+                >
+                  No saved conversations
+                </Typography>
 
-          <Paper sx={{ p: 3, borderRadius: 4 }}>
-            <Box component="form" onSubmit={handleSubmit}>
+                <Typography
+                  sx={{
+                    color: "#64748B !important",
+                    fontSize: 12,
+                    mt: 0.5,
+                  }}
+                >
+                  Start a new chat and it will appear
+                  here.
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={1}>
+                {sortedSessions.map((session) => {
+                  const isSelected =
+                    selectedSessionId === session.id;
+
+                  return (
+                    <Paper
+                      key={session.id}
+                      elevation={0}
+                      sx={{
+                        display: "flex",
+                        alignItems: "stretch",
+                        overflow: "hidden",
+                        borderRadius: 2.5,
+                        border: isSelected
+                          ? "1px solid #818CF8"
+                          : "1px solid #E2E8F0",
+                        backgroundColor: isSelected
+                          ? "#EEF2FF !important"
+                          : "#FFFFFF !important",
+                      }}
+                    >
+                      <ButtonBase
+                        onClick={() =>
+                          loadSession(session.id)
+                        }
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                          p: 1.4,
+                          textAlign: "left",
+                          display: "block",
+
+                          "&:hover": {
+                            backgroundColor:
+                              "#F8FAFF !important",
+                          },
+                        }}
+                      >
+                        <Typography
+                          noWrap
+                          sx={{
+                            color: isSelected
+                              ? "#4338CA !important"
+                              : "#0F172A !important",
+                            fontWeight: 800,
+                            fontSize: 13,
+                          }}
+                        >
+                          {session.title ||
+                            "Untitled Conversation"}
+                        </Typography>
+
+                        <Typography
+                          noWrap
+                          sx={{
+                            color: "#64748B !important",
+                            fontSize: 10,
+                            mt: 0.5,
+                          }}
+                        >
+                          {formatDate(
+                            session.updatedAt ||
+                              session.createdAt
+                          )}
+                        </Typography>
+                      </ButtonBase>
+
+                      <Tooltip title="Delete conversation">
+                        <IconButton
+                          onClick={(event) =>
+                            openDeleteDialog(
+                              event,
+                              session
+                            )
+                          }
+                          size="small"
+                          sx={{
+                            width: 39,
+                            borderRadius: 0,
+                            color: "#DC2626 !important",
+
+                            "&:hover": {
+                              backgroundColor:
+                                "#FEF2F2 !important",
+                            },
+                          }}
+                        >
+                          <DeleteOutlineRounded fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Paper>
+                  );
+                })}
+              </Stack>
+            )}
+          </Box>
+        </Paper>
+
+        {/* Main Assistant */}
+        <Box
+          sx={{
+            flex: 1,
+            width: "100%",
+            minWidth: 0,
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              p: {
+                xs: 2,
+                md: 3,
+              },
+              borderRadius: 4,
+              border: "1px solid #E2E8F0",
+              color: "#0F172A !important",
+              backgroundColor: "#FFFFFF !important",
+            }}
+          >
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              justifyContent="space-between"
+              alignItems={{
+                xs: "stretch",
+                sm: "center",
+              }}
+              gap={2}
+              mb={2.5}
+            >
+              <ToggleButtonGroup
+                exclusive
+                value={mode}
+                onChange={handleModeChange}
+                sx={{
+                  p: 0.6,
+                  gap: 0.7,
+                  borderRadius: 3,
+                  backgroundColor: "#F1F5F9",
+
+                  "& .MuiToggleButton-root": {
+                    px: {
+                      xs: 1.5,
+                      sm: 2.5,
+                    },
+                    py: 0.9,
+                    color: "#475569 !important",
+                    backgroundColor:
+                      "#FFFFFF !important",
+                    border:
+                      "1px solid #E2E8F0 !important",
+                    borderRadius:
+                      "10px !important",
+                    fontWeight: 800,
+                    textTransform: "none",
+                  },
+
+                  "& .MuiToggleButton-root.Mui-selected":
+                    {
+                      color: "#FFFFFF !important",
+                      backgroundColor:
+                        "#4F46E5 !important",
+                      borderColor:
+                        "#4F46E5 !important",
+                    },
+
+                  "& .MuiToggleButton-root.Mui-selected:hover":
+                    {
+                      backgroundColor:
+                        "#4338CA !important",
+                    },
+                }}
+              >
+                <ToggleButton value="rag">
+                  <DescriptionRounded
+                    sx={{
+                      mr: 0.8,
+                      fontSize: 19,
+                    }}
+                  />
+                  Ask Documents
+                </ToggleButton>
+
+                <ToggleButton value="chat">
+                  <SmartToyRounded
+                    sx={{
+                      mr: 0.8,
+                      fontSize: 19,
+                    }}
+                  />
+                  Normal Chat
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Chip
+                icon={<AutoAwesomeRounded />}
+                label={
+                  mode === "rag"
+                    ? "RAG Knowledge Search"
+                    : "Gemini Workplace Assistant"
+                }
+                sx={{
+                  alignSelf: {
+                    xs: "flex-start",
+                    sm: "center",
+                  },
+                  color: "#4338CA !important",
+                  backgroundColor:
+                    "#EEF2FF !important",
+                  border: "1px solid #C7D2FE",
+                  fontWeight: 800,
+
+                  "& .MuiChip-label": {
+                    color: "#4338CA !important",
+                  },
+
+                  "& .MuiChip-icon": {
+                    color: "#4F46E5 !important",
+                  },
+                }}
+              />
+            </Stack>
+
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+            >
               <TextField
                 fullWidth
                 multiline
-                rows={5}
+                minRows={5}
+                maxRows={10}
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                onChange={(event) =>
+                  setMessage(event.target.value)
+                }
+                onKeyDown={handleKeyboardSubmit}
                 placeholder={
                   mode === "rag"
-                    ? "Ask questions from uploaded PDFs..."
-                    : "Ask anything..."
+                    ? "Ask a question from your uploaded company documents..."
+                    : "Ask Nexus AI to help with workplace tasks..."
                 }
+                sx={fieldStyles}
               />
 
-              <Button
-                type="submit"
-                variant="contained"
-                startIcon={
-                  loading ? (
-                    <CircularProgress
-                      color="inherit"
-                      size={18}
-                    />
-                  ) : (
-                    <SendIcon />
-                  )
-                }
-                disabled={loading || !message.trim()}
-                sx={{ mt: 2, px: 4 }}
+              <Stack
+                direction={{
+                  xs: "column",
+                  sm: "row",
+                }}
+                justifyContent="space-between"
+                alignItems={{
+                  xs: "stretch",
+                  sm: "center",
+                }}
+                gap={1.5}
+                mt={2}
               >
-                {loading
-                  ? "Thinking..."
-                  : mode === "rag"
-                  ? "Ask Documents"
-                  : "Send"}
-              </Button>
+                <Typography
+                  sx={{
+                    color: "#94A3B8 !important",
+                    fontSize: 11,
+                  }}
+                >
+                  Press Ctrl + Enter to send
+                </Typography>
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={
+                    loading || !message.trim()
+                  }
+                  startIcon={
+                    loading ? (
+                      <CircularProgress
+                        color="inherit"
+                        size={18}
+                      />
+                    ) : (
+                      <SendRounded />
+                    )
+                  }
+                  sx={{
+                    minWidth: 160,
+                    py: 1.1,
+                    color: "#FFFFFF !important",
+                    background:
+                      "linear-gradient(135deg, #4F46E5, #7C3AED) !important",
+                    borderRadius: 2.5,
+                    fontWeight: 800,
+                    textTransform: "none",
+
+                    "&:hover": {
+                      background:
+                        "linear-gradient(135deg, #4338CA, #6D28D9) !important",
+                    },
+                  }}
+                >
+                  {loading
+                    ? "Nexus is thinking..."
+                    : mode === "rag"
+                    ? "Ask Documents"
+                    : "Send Message"}
+                </Button>
+              </Stack>
             </Box>
           </Paper>
 
-          {/* Saved conversation */}
-          {selectedSession && (
-            <Paper sx={{ mt: 4, p: 3, borderRadius: 4 }}>
-              <Typography variant="h6" fontWeight="bold">
-                {selectedSession.title || "Saved Conversation"}
-              </Typography>
+          {/* Loading Response */}
+          {loading && (
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 3,
+                p: 3,
+                borderRadius: 4,
+                border: "1px solid #E2E8F0",
+                backgroundColor: "#FFFFFF !important",
+              }}
+            >
+              <Stack
+                direction="row"
+                alignItems="center"
+                gap={1.5}
+              >
+                <Box
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#4F46E5",
+                    backgroundColor: "#EEF2FF",
+                    borderRadius: 2.5,
+                  }}
+                >
+                  <SmartToyRounded />
+                </Box>
 
-              <Divider sx={{ my: 2 }} />
+                <Box>
+                  <Typography
+                    fontWeight={900}
+                    sx={{
+                      color: "#0F172A !important",
+                    }}
+                  >
+                    Nexus AI is preparing your answer
+                  </Typography>
 
-              {historyMessages.length === 0 ? (
-                <Typography color="text.secondary">
-                  No messages found.
-                </Typography>
+                  <Typography
+                    sx={{
+                      color: "#64748B !important",
+                      fontSize: 13,
+                      mt: 0.3,
+                    }}
+                  >
+                    Searching knowledge and generating a
+                    relevant response...
+                  </Typography>
+                </Box>
+
+                <CircularProgress
+                  size={22}
+                  sx={{
+                    ml: "auto",
+                  }}
+                />
+              </Stack>
+            </Paper>
+          )}
+
+          {/* Selected Saved Conversation */}
+          {selectedSession && !loading && (
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 3,
+                p: {
+                  xs: 2,
+                  md: 3,
+                },
+                borderRadius: 4,
+                border: "1px solid #E2E8F0",
+                color: "#0F172A !important",
+                backgroundColor: "#FFFFFF !important",
+              }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="flex-start"
+                gap={2}
+              >
+                <Box>
+                  <Typography
+                    variant="h6"
+                    fontWeight={900}
+                    sx={{
+                      color: "#0F172A !important",
+                    }}
+                  >
+                    {selectedSession.title ||
+                      "Saved Conversation"}
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      color: "#64748B !important",
+                      fontSize: 12,
+                      mt: 0.3,
+                    }}
+                  >
+                    {formatDate(
+                      selectedSession.updatedAt ||
+                        selectedSession.createdAt
+                    )}
+                  </Typography>
+                </Box>
+
+                {sessionLoading && (
+                  <CircularProgress size={22} />
+                )}
+              </Stack>
+
+              <Divider
+                sx={{
+                  my: 2.5,
+                  borderColor: "#E2E8F0",
+                }}
+              />
+
+              {sessionLoading ? (
+                <Box
+                  sx={{
+                    py: 6,
+                    display: "grid",
+                    placeItems: "center",
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              ) : historyMessages.length === 0 ? (
+                <Alert
+                  severity="info"
+                  sx={{
+                    borderRadius: 3,
+                  }}
+                >
+                  No messages were found in this
+                  conversation.
+                </Alert>
               ) : (
-                historyMessages.map((item, index) => {
-                  const role = String(
-                    item.role || ""
-                  ).toLowerCase();
+                <Stack spacing={2}>
+                  {historyMessages.map(
+                    (item, index) => {
+                      const role = String(
+                        item.role || ""
+                      ).toLowerCase();
 
-                  const isUser =
-                    role === "user" || role === "human";
+                      const isUser =
+                        role === "user" ||
+                        role === "human";
 
-                  return (
+                      return (
+                        <Box
+                          key={item.id || index}
+                          sx={{
+                            display: "flex",
+                            justifyContent: isUser
+                              ? "flex-end"
+                              : "flex-start",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: "fit-content",
+                              maxWidth: {
+                                xs: "94%",
+                                md: "82%",
+                              },
+                              p: 2,
+                              borderRadius: isUser
+                                ? "18px 18px 4px 18px"
+                                : "18px 18px 18px 4px",
+                              backgroundColor: isUser
+                                ? "#4F46E5 !important"
+                                : "#F8FAFC !important",
+                              border: isUser
+                                ? "1px solid #4F46E5"
+                                : "1px solid #E2E8F0",
+                            }}
+                          >
+                            <Stack
+                              direction="row"
+                              justifyContent="space-between"
+                              alignItems="center"
+                              gap={2}
+                              mb={0.7}
+                            >
+                              <Typography
+                                sx={{
+                                  color: isUser
+                                    ? "rgba(255,255,255,0.78) !important"
+                                    : "#4F46E5 !important",
+                                  fontSize: 11,
+                                  fontWeight: 900,
+                                }}
+                              >
+                                {isUser
+                                  ? "You"
+                                  : "Nexus AI"}
+                              </Typography>
+
+                              {!isUser && (
+                                <Tooltip title="Copy answer">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleCopy(
+                                        item.content
+                                      )
+                                    }
+                                    sx={{
+                                      width: 26,
+                                      height: 26,
+                                      color:
+                                        "#64748B !important",
+                                    }}
+                                  >
+                                    <ContentCopyRounded
+                                      sx={{
+                                        fontSize: 15,
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </Stack>
+
+                            <Typography
+                              sx={{
+                                color: isUser
+                                  ? "#FFFFFF !important"
+                                  : "#0F172A !important",
+                                fontSize: 14,
+                                lineHeight: 1.7,
+                                whiteSpace: "pre-wrap",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              {item.content}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    }
+                  )}
+                </Stack>
+              )}
+            </Paper>
+          )}
+
+          {/* Latest Response */}
+          {!selectedSession &&
+            !loading &&
+            reply && (
+              <Paper
+                elevation={0}
+                sx={{
+                  mt: 3,
+                  p: {
+                    xs: 2,
+                    md: 3,
+                  },
+                  borderRadius: 4,
+                  border: "1px solid #E2E8F0",
+                  color: "#0F172A !important",
+                  backgroundColor:
+                    "#FFFFFF !important",
+                }}
+              >
+                {lastQuestion && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      mb: 2,
+                    }}
+                  >
                     <Box
-                      key={item.id || index}
                       sx={{
-                        mb: 2,
+                        maxWidth: {
+                          xs: "94%",
+                          md: "82%",
+                        },
                         p: 2,
-                        borderRadius: 2,
-                        backgroundColor: isUser
-                          ? "#eef2ff"
-                          : "#f8fafc",
-                        border: "1px solid #e2e8f0",
+                        borderRadius:
+                          "18px 18px 4px 18px",
+                        backgroundColor:
+                          "#4F46E5 !important",
                       }}
                     >
                       <Typography
-                        fontWeight="bold"
-                        fontSize={13}
-                        color={
-                          isUser
-                            ? "primary"
-                            : "text.secondary"
-                        }
+                        sx={{
+                          color:
+                            "rgba(255,255,255,0.76) !important",
+                          fontSize: 11,
+                          fontWeight: 900,
+                          mb: 0.6,
+                        }}
                       >
-                        {isUser ? "You" : "AI Assistant"}
+                        You
                       </Typography>
 
                       <Typography
-                        mt={0.5}
-                        sx={{ whiteSpace: "pre-wrap" }}
+                        sx={{
+                          color: "#FFFFFF !important",
+                          lineHeight: 1.65,
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                        }}
                       >
-                        {item.content}
+                        {lastQuestion}
                       </Typography>
                     </Box>
-                  );
-                })
-              )}
-            </Paper>
-          )}
+                  </Box>
+                )}
 
-          {/* Latest AI response */}
-          {!selectedSession && reply && (
-            <Paper sx={{ mt: 4, p: 3, borderRadius: 4 }}>
-              <Box display="flex" gap={2} mb={2}>
-                <SmartToyIcon color="primary" />
-
-                <Box sx={{ width: "100%" }}>
-                  <Typography fontWeight="bold" mb={1}>
-                    AI Response
-                  </Typography>
-
-                  <Typography sx={{ whiteSpace: "pre-wrap" }}>
-                    {reply}
-                  </Typography>
-                </Box>
-              </Box>
-
-              {sources.length > 0 && (
-                <>
-                  <Divider sx={{ my: 3 }} />
-
-                  <Typography variant="h6" gutterBottom>
-                    Sources
-                  </Typography>
-
-                  {sources.map((source, index) => (
-                    <Paper
-                      key={index}
-                      variant="outlined"
-                      sx={{ p: 2, mb: 2 }}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "flex-start",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: "100%",
+                      maxWidth: {
+                        xs: "100%",
+                        md: "92%",
+                      },
+                      p: 2.2,
+                      borderRadius:
+                        "18px 18px 18px 4px",
+                      border: "1px solid #E2E8F0",
+                      backgroundColor:
+                        "#F8FAFC !important",
+                    }}
+                  >
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      gap={2}
+                      mb={1}
                     >
-                      <Chip
-                        label={`Chunk #${source.chunkIndex}`}
-                        color="primary"
-                        size="small"
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        gap={1}
+                      >
+                        <SmartToyRounded
+                          sx={{
+                            color: "#4F46E5",
+                          }}
+                        />
+
+                        <Typography
+                          fontWeight={900}
+                          sx={{
+                            color:
+                              "#0F172A !important",
+                          }}
+                        >
+                          Nexus AI
+                        </Typography>
+                      </Stack>
+
+                      <Tooltip title="Copy answer">
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            handleCopy(reply)
+                          }
+                          sx={{
+                            color:
+                              "#64748B !important",
+                            backgroundColor:
+                              "#FFFFFF !important",
+                            border:
+                              "1px solid #E2E8F0",
+                          }}
+                        >
+                          <ContentCopyRounded fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+
+                    <Typography
+                      sx={{
+                        color: "#0F172A !important",
+                        whiteSpace: "pre-wrap",
+                        lineHeight: 1.75,
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {reply}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {sources.length > 0 && (
+                  <>
+                    <Divider
+                      sx={{
+                        my: 3,
+                        borderColor: "#E2E8F0",
+                      }}
+                    />
+
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      gap={1}
+                      mb={2}
+                    >
+                      <DescriptionRounded
+                        sx={{
+                          color: "#EA580C",
+                        }}
                       />
 
-                      {source.score !== undefined && (
-                        <Chip
-                          label={`Score ${Number(
-                            source.score
-                          ).toFixed(2)}`}
-                          color="success"
-                          size="small"
-                          sx={{ ml: 1 }}
-                        />
-                      )}
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          fontWeight={900}
+                          sx={{
+                            color:
+                              "#0F172A !important",
+                          }}
+                        >
+                          Retrieved Sources
+                        </Typography>
 
-                      <Typography mt={2}>
-                        {source.preview}
-                      </Typography>
-                    </Paper>
-                  ))}
-                </>
-              )}
-            </Paper>
-          )}
+                        <Typography
+                          sx={{
+                            color:
+                              "#64748B !important",
+                            fontSize: 12,
+                          }}
+                        >
+                          Document sections used to
+                          generate this answer.
+                        </Typography>
+                      </Box>
+                    </Stack>
+
+                    <Stack spacing={1.5}>
+                      {sources.map(
+                        (source, index) => {
+                          const score =
+                            formatScore(
+                              source.score
+                            );
+
+                          const documentName =
+                            source.fileName ||
+                            source.documentName ||
+                            source.document?.fileName ||
+                            "Uploaded document";
+
+                          return (
+                            <Paper
+                              key={`${source.chunkIndex}-${index}`}
+                              elevation={0}
+                              sx={{
+                                p: 2,
+                                borderRadius: 3,
+                                border:
+                                  "1px solid #E2E8F0",
+                                color:
+                                  "#0F172A !important",
+                                backgroundColor:
+                                  "#FFFFFF !important",
+                              }}
+                            >
+                              <Stack
+                                direction={{
+                                  xs: "column",
+                                  sm: "row",
+                                }}
+                                justifyContent="space-between"
+                                alignItems={{
+                                  xs: "flex-start",
+                                  sm: "center",
+                                }}
+                                gap={1}
+                              >
+                                <Stack
+                                  direction="row"
+                                  alignItems="center"
+                                  gap={1}
+                                >
+                                  <Chip
+                                    label={`Chunk #${
+                                      source.chunkIndex ??
+                                      index
+                                    }`}
+                                    size="small"
+                                    sx={{
+                                      color:
+                                        "#4338CA !important",
+                                      backgroundColor:
+                                        "#EEF2FF !important",
+                                      border:
+                                        "1px solid #C7D2FE",
+                                      fontWeight: 800,
+
+                                      "& .MuiChip-label":
+                                        {
+                                          color:
+                                            "#4338CA !important",
+                                        },
+                                    }}
+                                  />
+
+                                  <Typography
+                                    noWrap
+                                    sx={{
+                                      maxWidth: 240,
+                                      color:
+                                        "#64748B !important",
+                                      fontSize: 12,
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {documentName}
+                                  </Typography>
+                                </Stack>
+
+                                {score && (
+                                  <Chip
+                                    label={score}
+                                    size="small"
+                                    sx={{
+                                      color:
+                                        "#15803D !important",
+                                      backgroundColor:
+                                        "#F0FDF4 !important",
+                                      border:
+                                        "1px solid #BBF7D0",
+                                      fontWeight: 800,
+
+                                      "& .MuiChip-label":
+                                        {
+                                          color:
+                                            "#15803D !important",
+                                        },
+                                    }}
+                                  />
+                                )}
+                              </Stack>
+
+                              <Typography
+                                sx={{
+                                  color:
+                                    "#334155 !important",
+                                  mt: 1.5,
+                                  fontSize: 13,
+                                  lineHeight: 1.65,
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {source.preview ||
+                                  source.content ||
+                                  "Source preview unavailable."}
+                              </Typography>
+                            </Paper>
+                          );
+                        }
+                      )}
+                    </Stack>
+                  </>
+                )}
+              </Paper>
+            )}
         </Box>
       </Box>
+
+      {/* Delete Session Dialog */}
+      <Dialog
+        open={deleteOpen}
+        onClose={closeDeleteDialog}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            color: "#0F172A",
+            backgroundColor: "#FFFFFF !important",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            color: "#0F172A !important",
+            fontWeight: 900,
+          }}
+        >
+          Delete Conversation?
+        </DialogTitle>
+
+        <DialogContent>
+          <Alert
+            severity="warning"
+            sx={{
+              borderRadius: 2.5,
+            }}
+          >
+            This will permanently delete{" "}
+            <strong>
+              {sessionToDelete?.title ||
+                "this conversation"}
+            </strong>{" "}
+            and all of its messages.
+          </Alert>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 3,
+          }}
+        >
+          <Button
+            onClick={closeDeleteDialog}
+            disabled={deleting}
+            sx={{
+              color: "#475569 !important",
+              fontWeight: 800,
+              textTransform: "none",
+            }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            onClick={handleDeleteSession}
+            disabled={deleting}
+            startIcon={
+              deleting ? (
+                <CircularProgress
+                  size={17}
+                  color="inherit"
+                />
+              ) : (
+                <DeleteOutlineRounded />
+              )
+            }
+            sx={{
+              color: "#FFFFFF !important",
+              backgroundColor: "#DC2626 !important",
+              borderRadius: 2,
+              fontWeight: 800,
+              textTransform: "none",
+
+              "&:hover": {
+                backgroundColor: "#B91C1C !important",
+              },
+            }}
+          >
+            {deleting
+              ? "Deleting..."
+              : "Delete Conversation"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -1,16 +1,46 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import toast from "react-hot-toast";
 
 import {
   Alert,
   Box,
   Button,
+  ButtonBase,
+  Chip,
   CircularProgress,
+  Divider,
   Grid,
+  IconButton,
+  InputAdornment,
   MenuItem,
   Paper,
+  Stack,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
+
+import {
+  AssessmentRounded,
+  AutoAwesomeRounded,
+  BusinessCenterRounded,
+  CalendarMonthRounded,
+  CheckCircleRounded,
+  CloudRounded,
+  ContentCopyRounded,
+  DnsRounded,
+  EmailRounded,
+  FactCheckRounded,
+  GroupsRounded,
+  HubRounded,
+  ManageSearchRounded,
+  PeopleAltRounded,
+  PlayArrowRounded,
+  RecordVoiceOverRounded,
+  RefreshRounded,
+  TaskAltRounded,
+  WindowRounded,
+} from "@mui/icons-material";
 
 import {
   askHrAgent,
@@ -27,115 +57,207 @@ import {
   getFeatureRegistry,
 } from "../../services/agent.service";
 
+const today = new Date().toISOString().split("T")[0];
+
+const initialForm = {
+  question: "What is the company leave policy?",
+  prompt:
+    "Write a professional email to HR asking for 2 days leave due to fever.",
+  title: "Nexus AI Project Review Meeting",
+  description:
+    "Prepare the final demo and project review for the team.",
+  recipient: "HR Manager",
+  tone: "Professional",
+  purpose: "Leave Request",
+  date: today,
+  time: "11:00",
+  participants: "HR Manager, Team Lead, Developer",
+  priority: "high",
+  dueDate: today,
+  reportType: "AI Usage Report",
+  period: "July 2026",
+  transcript:
+    "Summarize the Nexus AI Employee Copilot project progress.",
+  actionType: "project_update",
+  platform: "Slack",
+  channel: "#project-team",
+};
+
 const agentOptions = [
   {
     key: "hr",
     title: "HR Agent",
-    description: "Leave policy, HR policy, employee support",
+    description:
+      "Answer employee questions about leave, HR policies and workplace support.",
+    category: "AI Agent",
+    Icon: PeopleAltRounded,
+    accent: "#4F46E5",
+    soft: "#EEF2FF",
   },
   {
     key: "email",
     title: "Email Agent",
-    description: "Professional email draft generation",
+    description:
+      "Generate professional workplace emails with recipient, tone and purpose.",
+    category: "AI Agent",
+    Icon: EmailRounded,
+    accent: "#2563EB",
+    soft: "#EFF6FF",
   },
   {
     key: "meeting",
-    title: "Meeting Scheduler Agent",
-    description: "Meeting agenda, participants, follow-up tasks",
+    title: "Meeting Scheduler",
+    description:
+      "Prepare meeting schedules, agendas, participants and follow-up actions.",
+    category: "AI Agent",
+    Icon: CalendarMonthRounded,
+    accent: "#0891B2",
+    soft: "#ECFEFF",
   },
   {
     key: "task",
-    title: "Task Manager Agent",
-    description: "Task plan, priority, execution steps",
+    title: "Task Manager",
+    description:
+      "Create structured execution plans with priorities and deadlines.",
+    category: "AI Agent",
+    Icon: TaskAltRounded,
+    accent: "#16A34A",
+    soft: "#F0FDF4",
   },
   {
     key: "report",
-    title: "Report Generator Agent",
-    description: "AI-powered business reports",
+    title: "Report Generator",
+    description:
+      "Generate structured business and project reports using AI.",
+    category: "AI Agent",
+    Icon: AssessmentRounded,
+    accent: "#EA580C",
+    soft: "#FFF7ED",
   },
   {
     key: "knowledge",
     title: "Knowledge Agent",
-    description: "Advanced enterprise document search",
+    description:
+      "Search organizational knowledge and retrieve relevant information.",
+    category: "AI Agent",
+    Icon: ManageSearchRounded,
+    accent: "#7C3AED",
+    soft: "#F5F3FF",
   },
   {
     key: "voice",
     title: "Voice Assistant",
-    description: "Transcript-based voice assistant demo",
+    description:
+      "Process voice transcripts and convert commands into useful outputs.",
+    category: "AI Agent",
+    Icon: RecordVoiceOverRounded,
+    accent: "#DB2777",
+    soft: "#FDF2F8",
   },
   {
     key: "google",
-    title: "Google Workspace Demo",
-    description: "Gmail, Calendar, Drive, Docs demo actions",
+    title: "Google Workspace",
+    description:
+      "Demonstrate actions for Gmail, Calendar, Drive and Google Docs.",
+    category: "Integration",
+    Icon: CloudRounded,
+    accent: "#2563EB",
+    soft: "#EFF6FF",
   },
   {
     key: "microsoft",
-    title: "Microsoft 365 Demo",
-    description: "Outlook, Teams, OneDrive, Word demo actions",
+    title: "Microsoft 365",
+    description:
+      "Demonstrate Outlook, Teams, OneDrive and Microsoft productivity actions.",
+    category: "Integration",
+    Icon: WindowRounded,
+    accent: "#0284C7",
+    soft: "#F0F9FF",
   },
   {
     key: "collaboration",
-    title: "Slack & Teams Demo",
-    description: "Slack/Teams messages, reminders, updates",
+    title: "Slack & Teams",
+    description:
+      "Generate collaboration messages, reminders and project updates.",
+    category: "Integration",
+    Icon: GroupsRounded,
+    accent: "#9333EA",
+    soft: "#FAF5FF",
   },
   {
     key: "system",
     title: "System Status",
-    description: "Backend, database, AI and demo readiness",
+    description:
+      "Check backend, database, AI services and deployment readiness.",
+    category: "System",
+    Icon: DnsRounded,
+    accent: "#059669",
+    soft: "#ECFDF5",
   },
   {
     key: "features",
     title: "Feature Registry",
-    description: "Complete project features and roadmap",
+    description:
+      "Review current product features, supported agents and future roadmap.",
+    category: "System",
+    Icon: FactCheckRounded,
+    accent: "#475569",
+    soft: "#F8FAFC",
   },
 ];
 
-const Agents = () => {
-  const [selectedAgent, setSelectedAgent] = useState("hr");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+const fieldStyles = {
+  "& .MuiOutlinedInput-root": {
+    color: "#0F172A !important",
+    backgroundColor: "#FFFFFF !important",
+    borderRadius: 2.5,
 
-  const [form, setForm] = useState({
-    question: "What is the leave policy?",
-    prompt: "Write a professional email to HR asking for 2 days leave due to fever.",
-    title: "Nexus AI Project Review Meeting",
-    description: "Prepare final demo and presentation for university-level project evaluation.",
-    recipient: "HR Manager",
-    tone: "Professional",
-    purpose: "Leave Request",
-    date: "2026-07-12",
-    time: "11:00 AM",
-    participants: "HR Manager, Team Lead, Developer",
-    priority: "high",
-    dueDate: "2026-07-12",
-    reportType: "AI Usage Report",
-    period: "July 2026",
-    transcript: "Summarize Nexus AI Employee Copilot project progress in short.",
-    actionType: "project_update",
-    platform: "Slack",
-    channel: "#project-team",
-  });
+    "& fieldset": {
+      borderColor: "#CBD5E1",
+    },
 
-  const [result, setResult] = useState("");
+    "&:hover fieldset": {
+      borderColor: "#818CF8",
+    },
 
-  const handleChange = (event) => {
-    setForm({
-      ...form,
-      [event.target.name]: event.target.value,
-    });
-  };
+    "&.Mui-focused fieldset": {
+      borderColor: "#4F46E5",
+    },
+  },
 
-  const participantsArray = form.participants
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+  "& .MuiInputLabel-root": {
+    color: "#64748B !important",
+  },
 
-  const getResponseText = (response) => {
-  const payload = response?.data;
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#4F46E5 !important",
+  },
+
+  "& .MuiInputBase-input": {
+    color: "#0F172A !important",
+  },
+
+  "& textarea": {
+    color: "#0F172A !important",
+  },
+
+  "& .MuiSelect-select": {
+    color: "#0F172A !important",
+  },
+
+  "& .MuiSvgIcon-root": {
+    color: "#64748B",
+  },
+};
+
+const getResponseText = (response) => {
+  const payload = response?.data ?? response;
 
   if (!payload) {
-    return "No response received from server.";
+    return "No response received from the server.";
   }
+
+  const nestedPayload = payload.data;
 
   const mainOutput =
     payload.answer ||
@@ -144,460 +266,1258 @@ const Agents = () => {
     payload.plan ||
     payload.report ||
     payload.response ||
-    payload.output;
+    payload.output ||
+    nestedPayload?.answer ||
+    nestedPayload?.draft ||
+    nestedPayload?.schedule ||
+    nestedPayload?.plan ||
+    nestedPayload?.report ||
+    nestedPayload?.response ||
+    nestedPayload?.output;
 
-  if (mainOutput) {
+  if (typeof mainOutput === "string") {
     return mainOutput;
   }
 
-  if (payload.data) {
-    return JSON.stringify(payload.data, null, 2);
+  if (mainOutput !== undefined && mainOutput !== null) {
+    return JSON.stringify(mainOutput, null, 2);
+  }
+
+  if (nestedPayload !== undefined && nestedPayload !== null) {
+    if (typeof nestedPayload === "string") {
+      return nestedPayload;
+    }
+
+    return JSON.stringify(nestedPayload, null, 2);
+  }
+
+  if (typeof payload === "string") {
+    return payload;
   }
 
   return JSON.stringify(payload, null, 2);
 };
 
+const Agents = () => {
+  const [selectedAgent, setSelectedAgent] = useState("hr");
+  const [form, setForm] = useState(initialForm);
+
+  const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const selected = useMemo(
+    () =>
+      agentOptions.find(
+        (agent) => agent.key === selectedAgent
+      ) || agentOptions[0],
+    [selectedAgent]
+  );
+
+  const participantsArray = useMemo(
+    () =>
+      form.participants
+        .split(",")
+        .map((participant) => participant.trim())
+        .filter(Boolean),
+    [form.participants]
+  );
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const handleAgentSelect = (agentKey) => {
+    setSelectedAgent(agentKey);
+    setResult("");
+    setError("");
+  };
+
+  const validateInput = () => {
+    if (
+      ["hr", "knowledge"].includes(selectedAgent) &&
+      !form.question.trim()
+    ) {
+      return "Please enter a question.";
+    }
+
+    if (
+      ["email", "google", "microsoft", "collaboration"].includes(
+        selectedAgent
+      ) &&
+      !form.prompt.trim()
+    ) {
+      return "Please enter a prompt.";
+    }
+
+    if (
+      ["meeting", "task", "report"].includes(selectedAgent) &&
+      !form.title.trim()
+    ) {
+      return "Please enter a title.";
+    }
+
+    if (
+      selectedAgent === "voice" &&
+      !form.transcript.trim()
+    ) {
+      return "Please enter a voice transcript.";
+    }
+
+    return "";
+  };
+
   const runAgent = async () => {
+    const validationError = validateInput();
+
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
 
     try {
       setLoading(true);
       setError("");
-      setResult("Agent is running... please wait.");
       setResult("");
 
       let response;
 
-      if (selectedAgent === "hr") {
-        response = await askHrAgent({
-          question: form.question,
-        });
+      switch (selectedAgent) {
+        case "hr":
+          response = await askHrAgent({
+            question: form.question.trim(),
+          });
+          break;
+
+        case "email":
+          response = await generateEmailDraft({
+            prompt: form.prompt.trim(),
+            recipient: form.recipient.trim(),
+            tone: form.tone,
+            purpose: form.purpose.trim(),
+          });
+          break;
+
+        case "meeting":
+          response = await generateMeetingSchedule({
+            title: form.title.trim(),
+            date: form.date,
+            time: form.time,
+            participants: participantsArray,
+            purpose: form.purpose.trim(),
+          });
+          break;
+
+        case "task":
+          response = await generateTaskPlan({
+            title: form.title.trim(),
+            description: form.description.trim(),
+            priority: form.priority,
+            dueDate: form.dueDate,
+          });
+          break;
+
+        case "report":
+          response = await generateReport({
+            reportType: form.reportType.trim(),
+            title: form.title.trim(),
+            period: form.period.trim(),
+            instructions: form.description.trim(),
+            includeAnalytics: true,
+          });
+          break;
+
+        case "knowledge":
+          response = await searchKnowledge({
+            question: form.question.trim(),
+          });
+          break;
+
+        case "voice":
+          response = await processVoiceCommand({
+            transcript: form.transcript.trim(),
+            intent: "project_assistant",
+          });
+          break;
+
+        case "google":
+          response = await googleWorkspaceAction({
+            actionType: form.actionType,
+            prompt: form.prompt.trim(),
+            recipient: form.recipient.trim(),
+            date: form.date,
+            time: form.time,
+            participants: participantsArray,
+          });
+          break;
+
+        case "microsoft":
+          response = await microsoft365Action({
+            actionType: form.actionType,
+            prompt: form.prompt.trim(),
+            recipient: form.recipient.trim(),
+            date: form.date,
+            time: form.time,
+            participants: participantsArray,
+            channel: form.channel.trim(),
+          });
+          break;
+
+        case "collaboration":
+          response = await collaborationAction({
+            platform: form.platform,
+            actionType: form.actionType,
+            prompt: form.prompt.trim(),
+            channel: form.channel.trim(),
+            recipients: participantsArray,
+            priority: form.priority,
+          });
+          break;
+
+        case "system":
+          response = await getSystemStatus();
+          break;
+
+        case "features":
+          response = await getFeatureRegistry();
+          break;
+
+        default:
+          throw new Error("Unsupported agent selected.");
       }
 
-      if (selectedAgent === "email") {
-        response = await generateEmailDraft({
-          prompt: form.prompt,
-          recipient: form.recipient,
-          tone: form.tone,
-          purpose: form.purpose,
-        });
-      }
+      const output = getResponseText(response);
 
-      if (selectedAgent === "meeting") {
-        response = await generateMeetingSchedule({
-          title: form.title,
-          date: form.date,
-          time: form.time,
-          participants: participantsArray,
-          purpose: form.purpose,
-        });
-      }
+      setResult(
+        output ||
+          "The request completed but no readable output was returned."
+      );
 
-      if (selectedAgent === "task") {
-        response = await generateTaskPlan({
-          title: form.title,
-          description: form.description,
-          priority: form.priority,
-          dueDate: form.dueDate,
-        });
-      }
+      toast.success(`${selected.title} completed`);
+    } catch (requestError) {
+      console.error("Agent error:", requestError);
 
-      if (selectedAgent === "report") {
-        response = await generateReport({
-          reportType: form.reportType,
-          title: form.title,
-          period: form.period,
-          instructions: form.description,
-          includeAnalytics: true,
-        });
-      }
+      const message =
+        requestError.response?.data?.message ||
+        requestError.message ||
+        "The agent request failed.";
 
-      if (selectedAgent === "knowledge") {
-        response = await searchKnowledge({
-          question: form.question,
-        });
-      }
-
-      if (selectedAgent === "voice") {
-        response = await processVoiceCommand({
-          transcript: form.transcript,
-          intent: "project_assistant",
-        });
-      }
-
-      if (selectedAgent === "google") {
-        response = await googleWorkspaceAction({
-          actionType: form.actionType,
-          prompt: form.prompt,
-          recipient: form.recipient,
-          date: form.date,
-          time: form.time,
-          participants: participantsArray,
-        });
-      }
-
-      if (selectedAgent === "microsoft") {
-        response = await microsoft365Action({
-          actionType: form.actionType,
-          prompt: form.prompt,
-          recipient: form.recipient,
-          date: form.date,
-          time: form.time,
-          participants: participantsArray,
-          channel: form.channel,
-        });
-      }
-
-      if (selectedAgent === "collaboration") {
-        response = await collaborationAction({
-          platform: form.platform,
-          actionType: form.actionType,
-          prompt: form.prompt,
-          channel: form.channel,
-          recipients: participantsArray,
-          priority: form.priority,
-        });
-      }
-
-      if (selectedAgent === "system") {
-        response = await getSystemStatus();
-      }
-
-      if (selectedAgent === "features") {
-        response = await getFeatureRegistry();
-      }
-
-
-const finalText = getResponseText(response);
-
-setResult(finalText || "Response received but no readable output found.");
-    }
-    
-    catch (err) {
-  console.error("Agent Error:", err);
-
-  const message =
-    err.response?.data?.message ||
-    err.message ||
-    "Something went wrong";
-
-  setError(message);
-  setResult(`Error: ${message}`);
-}
- finally {
+      setError(message);
+      setResult("");
+      toast.error(message);
+    } finally {
       setLoading(false);
     }
   };
 
-  const selected = agentOptions.find((agent) => agent.key === selectedAgent);
+  const handleCopy = async () => {
+    if (!result) return;
 
-  return (
-    <>
-      <Typography variant="h4" fontWeight="bold">
-        AI Agents & Integrations
-      </Typography>
+    try {
+      await navigator.clipboard.writeText(result);
+      toast.success("Agent response copied");
+    } catch (copyError) {
+      console.error("Copy error:", copyError);
+      toast.error("Unable to copy response");
+    }
+  };
 
-      <Typography color="text.secondary" mb={4}>
-        Demo all Nexus AI Employee Copilot agents from one place.
-      </Typography>
+  const handleReset = () => {
+    setForm(initialForm);
+    setResult("");
+    setError("");
+  };
 
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper sx={{ p: 3, borderRadius: 4 }}>
-            <Typography variant="h6" mb={2}>
-              Select Agent
-            </Typography>
+  const renderAgentInputs = () => (
+    <Stack spacing={2}>
+      {["hr", "knowledge"].includes(selectedAgent) && (
+        <TextField
+          fullWidth
+          multiline
+          minRows={4}
+          maxRows={8}
+          label="Question"
+          name="question"
+          value={form.question}
+          onChange={handleChange}
+          placeholder="Enter your workplace question..."
+          sx={fieldStyles}
+        />
+      )}
 
+      {["email", "google", "microsoft", "collaboration"].includes(
+        selectedAgent
+      ) && (
+        <TextField
+          fullWidth
+          multiline
+          minRows={4}
+          maxRows={8}
+          label="Prompt"
+          name="prompt"
+          value={form.prompt}
+          onChange={handleChange}
+          placeholder="Describe what the agent should generate..."
+          sx={fieldStyles}
+        />
+      )}
+
+      {selectedAgent === "voice" && (
+        <TextField
+          fullWidth
+          multiline
+          minRows={4}
+          maxRows={8}
+          label="Voice Transcript"
+          name="transcript"
+          value={form.transcript}
+          onChange={handleChange}
+          placeholder="Paste or enter the voice transcript..."
+          sx={fieldStyles}
+        />
+      )}
+
+      {["meeting", "task", "report"].includes(
+        selectedAgent
+      ) && (
+        <TextField
+          fullWidth
+          label="Title"
+          name="title"
+          value={form.title}
+          onChange={handleChange}
+          sx={fieldStyles}
+        />
+      )}
+
+      {["task", "report"].includes(selectedAgent) && (
+        <TextField
+          fullWidth
+          multiline
+          minRows={3}
+          maxRows={7}
+          label="Description / Instructions"
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          sx={fieldStyles}
+        />
+      )}
+
+      {["email", "google", "microsoft"].includes(
+        selectedAgent
+      ) && (
+        <TextField
+          fullWidth
+          label="Recipient"
+          name="recipient"
+          value={form.recipient}
+          onChange={handleChange}
+          sx={fieldStyles}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PeopleAltRounded fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        />
+      )}
+
+      {selectedAgent === "email" && (
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               select
               fullWidth
-              label="Agent"
-              value={selectedAgent}
-              onChange={(e) => setSelectedAgent(e.target.value)}
+              label="Tone"
+              name="tone"
+              value={form.tone}
+              onChange={handleChange}
+              sx={fieldStyles}
             >
-              {agentOptions.map((agent) => (
-                <MenuItem key={agent.key} value={agent.key}>
-                  {agent.title}
-                </MenuItem>
-              ))}
+              <MenuItem value="Professional">
+                Professional
+              </MenuItem>
+              <MenuItem value="Formal">Formal</MenuItem>
+              <MenuItem value="Friendly">Friendly</MenuItem>
+              <MenuItem value="Concise">Concise</MenuItem>
             </TextField>
+          </Grid>
 
-            <Box mt={3}>
-              <Typography fontWeight="bold">{selected?.title}</Typography>
-              <Typography color="text.secondary">
-                {selected?.description}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Purpose"
+              name="purpose"
+              value={form.purpose}
+              onChange={handleChange}
+              sx={fieldStyles}
+            />
+          </Grid>
+        </Grid>
+      )}
+
+      {selectedAgent === "meeting" && (
+        <TextField
+          fullWidth
+          label="Meeting Purpose"
+          name="purpose"
+          value={form.purpose}
+          onChange={handleChange}
+          sx={fieldStyles}
+        />
+      )}
+
+      {["meeting", "google", "microsoft"].includes(
+        selectedAgent
+      ) && (
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              type="date"
+              label="Date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              sx={fieldStyles}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              type="time"
+              label="Time"
+              name="time"
+              value={form.time}
+              onChange={handleChange}
+              sx={fieldStyles}
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+          </Grid>
+        </Grid>
+      )}
+
+      {[
+        "meeting",
+        "google",
+        "microsoft",
+        "collaboration",
+      ].includes(selectedAgent) && (
+        <TextField
+          fullWidth
+          label="Participants / Recipients"
+          name="participants"
+          value={form.participants}
+          onChange={handleChange}
+          helperText="Separate multiple people with commas."
+          sx={{
+            ...fieldStyles,
+
+            "& .MuiFormHelperText-root": {
+              color: "#64748B !important",
+            },
+          }}
+        />
+      )}
+
+      {["task", "collaboration"].includes(
+        selectedAgent
+      ) && (
+        <TextField
+          select
+          fullWidth
+          label="Priority"
+          name="priority"
+          value={form.priority}
+          onChange={handleChange}
+          sx={fieldStyles}
+        >
+          <MenuItem value="low">Low</MenuItem>
+          <MenuItem value="medium">Medium</MenuItem>
+          <MenuItem value="high">High</MenuItem>
+          <MenuItem value="urgent">Urgent</MenuItem>
+        </TextField>
+      )}
+
+      {selectedAgent === "task" && (
+        <TextField
+          fullWidth
+          type="date"
+          label="Due Date"
+          name="dueDate"
+          value={form.dueDate}
+          onChange={handleChange}
+          sx={fieldStyles}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+      )}
+
+      {selectedAgent === "report" && (
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Report Type"
+              name="reportType"
+              value={form.reportType}
+              onChange={handleChange}
+              sx={fieldStyles}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Reporting Period"
+              name="period"
+              value={form.period}
+              onChange={handleChange}
+              sx={fieldStyles}
+            />
+          </Grid>
+        </Grid>
+      )}
+
+      {["google", "microsoft", "collaboration"].includes(
+        selectedAgent
+      ) && (
+        <TextField
+          select
+          fullWidth
+          label="Action Type"
+          name="actionType"
+          value={form.actionType}
+          onChange={handleChange}
+          sx={fieldStyles}
+        >
+          <MenuItem value="project_update">
+            Project Update
+          </MenuItem>
+          <MenuItem value="send_message">
+            Send Message
+          </MenuItem>
+          <MenuItem value="create_meeting">
+            Create Meeting
+          </MenuItem>
+          <MenuItem value="create_task">
+            Create Task
+          </MenuItem>
+          <MenuItem value="summary">
+            Generate Summary
+          </MenuItem>
+        </TextField>
+      )}
+
+      {selectedAgent === "collaboration" && (
+        <TextField
+          select
+          fullWidth
+          label="Platform"
+          name="platform"
+          value={form.platform}
+          onChange={handleChange}
+          sx={fieldStyles}
+        >
+          <MenuItem value="Slack">Slack</MenuItem>
+          <MenuItem value="Microsoft Teams">
+            Microsoft Teams
+          </MenuItem>
+        </TextField>
+      )}
+
+      {["microsoft", "collaboration"].includes(
+        selectedAgent
+      ) && (
+        <TextField
+          fullWidth
+          label="Channel"
+          name="channel"
+          value={form.channel}
+          onChange={handleChange}
+          sx={fieldStyles}
+        />
+      )}
+    </Stack>
+  );
+
+  const SelectedIcon = selected.Icon;
+
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        color: "#0F172A",
+      }}
+    >
+      {/* Header */}
+      <Stack
+        direction={{
+          xs: "column",
+          sm: "row",
+        }}
+        justifyContent="space-between"
+        alignItems={{
+          xs: "flex-start",
+          sm: "center",
+        }}
+        gap={2}
+        mb={3}
+      >
+        <Stack direction="row" alignItems="center" gap={1.3}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              display: "grid",
+              placeItems: "center",
+              color: "#7C3AED",
+              backgroundColor: "#F5F3FF",
+              borderRadius: 3,
+            }}
+          >
+            <HubRounded />
+          </Box>
+
+          <Box>
+            <Typography
+              variant="h4"
+              fontWeight={900}
+              sx={{
+                color: "#0F172A !important",
+                fontSize: {
+                  xs: "1.8rem",
+                  md: "2.15rem",
+                },
+              }}
+            >
+              AI Agents & Integrations
+            </Typography>
+
+            <Typography
+              sx={{
+                color: "#64748B !important",
+                mt: 0.3,
+              }}
+            >
+              Run specialized enterprise agents from one
+              intelligent workspace.
+            </Typography>
+          </Box>
+        </Stack>
+
+        <Stack direction="row" gap={1}>
+          <Chip
+            icon={<CheckCircleRounded />}
+            label={`${agentOptions.length} Capabilities`}
+            sx={{
+              color: "#15803D !important",
+              backgroundColor: "#F0FDF4 !important",
+              border: "1px solid #BBF7D0",
+              fontWeight: 800,
+
+              "& .MuiChip-label": {
+                color: "#15803D !important",
+              },
+
+              "& .MuiChip-icon": {
+                color: "#16A34A !important",
+              },
+            }}
+          />
+
+          <Chip
+            label="Demo Ready"
+            sx={{
+              color: "#4338CA !important",
+              backgroundColor: "#EEF2FF !important",
+              border: "1px solid #C7D2FE",
+              fontWeight: 800,
+
+              "& .MuiChip-label": {
+                color: "#4338CA !important",
+              },
+            }}
+          />
+        </Stack>
+      </Stack>
+
+      <Grid container spacing={3} alignItems="flex-start">
+        {/* Agent Directory */}
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: {
+                xs: 2,
+                md: 2.5,
+              },
+              borderRadius: 4,
+              border: "1px solid #E2E8F0",
+              color: "#0F172A !important",
+              backgroundColor: "#FFFFFF !important",
+            }}
+          >
+            <Stack
+              direction="row"
+              alignItems="center"
+              gap={1}
+              mb={0.5}
+            >
+              <BusinessCenterRounded
+                sx={{
+                  color: "#4F46E5",
+                }}
+              />
+
+              <Typography
+                variant="h6"
+                fontWeight={900}
+                sx={{
+                  color: "#0F172A !important",
+                }}
+              >
+                Agent Directory
               </Typography>
-            </Box>
+            </Stack>
+
+            <Typography
+              sx={{
+                color: "#64748B !important",
+                fontSize: 13,
+                mb: 2,
+              }}
+            >
+              Select an agent or integration to configure and
+              run.
+            </Typography>
+
+            <Grid container spacing={1.5}>
+              {agentOptions.map((agent) => {
+                const Icon = agent.Icon;
+                const isSelected =
+                  selectedAgent === agent.key;
+
+                return (
+                  <Grid
+                    key={agent.key}
+                    size={{
+                      xs: 12,
+                      sm: 6,
+                    }}
+                  >
+                    <ButtonBase
+                      onClick={() =>
+                        handleAgentSelect(agent.key)
+                      }
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                        textAlign: "left",
+                        borderRadius: 3,
+                      }}
+                    >
+                      <Paper
+                        elevation={0}
+                        sx={{
+                          height: "100%",
+                          p: 1.7,
+                          borderRadius: 3,
+                          border: isSelected
+                            ? `2px solid ${agent.accent}`
+                            : "1px solid #E2E8F0",
+                          backgroundColor: isSelected
+                            ? `${agent.soft} !important`
+                            : "#FFFFFF !important",
+                          transition: "all 0.2s ease",
+
+                          "&:hover": {
+                            borderColor: agent.accent,
+                            transform: "translateY(-2px)",
+                            boxShadow:
+                              "0 8px 20px rgba(15,23,42,0.07)",
+                          },
+                        }}
+                      >
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="flex-start"
+                          gap={1}
+                        >
+                          <Box
+                            sx={{
+                              width: 38,
+                              height: 38,
+                              display: "grid",
+                              placeItems: "center",
+                              color: agent.accent,
+                              backgroundColor: agent.soft,
+                              borderRadius: 2.3,
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Icon fontSize="small" />
+                          </Box>
+
+                          {isSelected && (
+                            <CheckCircleRounded
+                              sx={{
+                                color: agent.accent,
+                                fontSize: 20,
+                              }}
+                            />
+                          )}
+                        </Stack>
+
+                        <Typography
+                          fontWeight={900}
+                          sx={{
+                            color: "#0F172A !important",
+                            fontSize: 13,
+                            mt: 1.2,
+                          }}
+                        >
+                          {agent.title}
+                        </Typography>
+
+                        <Typography
+                          sx={{
+                            color: "#64748B !important",
+                            fontSize: 11,
+                            lineHeight: 1.5,
+                            mt: 0.5,
+                          }}
+                        >
+                          {agent.description}
+                        </Typography>
+
+                        <Chip
+                          label={agent.category}
+                          size="small"
+                          sx={{
+                            height: 23,
+                            mt: 1.2,
+                            color: `${agent.accent} !important`,
+                            backgroundColor:
+                              `${agent.soft} !important`,
+                            border: `1px solid ${agent.accent}33`,
+                            fontWeight: 800,
+                            fontSize: 10,
+
+                            "& .MuiChip-label": {
+                              color:
+                                `${agent.accent} !important`,
+                              px: 1,
+                            },
+                          }}
+                        />
+                      </Paper>
+                    </ButtonBase>
+                  </Grid>
+                );
+              })}
+            </Grid>
           </Paper>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Paper sx={{ p: 3, borderRadius: 4 }}>
-            <Typography variant="h6" mb={2}>
-              Agent Input
-            </Typography>
-
-            {(selectedAgent === "hr" || selectedAgent === "knowledge") && (
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Question"
-                name="question"
-                value={form.question}
-                onChange={handleChange}
-              />
-            )}
-
-            {[
-              "email",
-              "google",
-              "microsoft",
-              "collaboration",
-            ].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Prompt"
-                name="prompt"
-                value={form.prompt}
-                onChange={handleChange}
-              />
-            )}
-
-            {selectedAgent === "voice" && (
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Voice Transcript"
-                name="transcript"
-                value={form.transcript}
-                onChange={handleChange}
-              />
-            )}
-
-            {["meeting", "task", "report"].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                label="Title"
-                name="title"
-                value={form.title}
-                onChange={handleChange}
-                sx={{ mb: 2 }}
-              />
-            )}
-
-            {["task", "report"].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                multiline
-                rows={3}
-                label="Description / Instructions"
-                name="description"
-                value={form.description}
-                onChange={handleChange}
-                sx={{ mb: 2 }}
-              />
-            )}
-
-            {["email", "google", "microsoft"].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                label="Recipient"
-                name="recipient"
-                value={form.recipient}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {selectedAgent === "email" && (
-              <TextField
-                fullWidth
-                label="Tone"
-                name="tone"
-                value={form.tone}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {["email", "meeting"].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                label="Purpose"
-                name="purpose"
-                value={form.purpose}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {["meeting", "google", "microsoft"].includes(selectedAgent) && (
-              <Grid container spacing={2} mt={1}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Date"
-                    name="date"
-                    value={form.date}
-                    onChange={handleChange}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    fullWidth
-                    label="Time"
-                    name="time"
-                    value={form.time}
-                    onChange={handleChange}
-                  />
-                </Grid>
-              </Grid>
-            )}
-
-            {[
-              "meeting",
-              "google",
-              "microsoft",
-              "collaboration",
-            ].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                label="Participants / Recipients comma separated"
-                name="participants"
-                value={form.participants}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {["task", "collaboration"].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                label="Priority"
-                name="priority"
-                value={form.priority}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {selectedAgent === "task" && (
-              <TextField
-                fullWidth
-                label="Due Date"
-                name="dueDate"
-                value={form.dueDate}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {selectedAgent === "report" && (
-              <>
-                <TextField
-                  fullWidth
-                  label="Report Type"
-                  name="reportType"
-                  value={form.reportType}
-                  onChange={handleChange}
-                  sx={{ mt: 2 }}
-                />
-
-                <TextField
-                  fullWidth
-                  label="Period"
-                  name="period"
-                  value={form.period}
-                  onChange={handleChange}
-                  sx={{ mt: 2 }}
-                />
-              </>
-            )}
-
-            {["google", "microsoft", "collaboration"].includes(
-              selectedAgent
-            ) && (
-              <TextField
-                fullWidth
-                label="Action Type"
-                name="actionType"
-                value={form.actionType}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {selectedAgent === "collaboration" && (
-              <TextField
-                fullWidth
-                label="Platform"
-                name="platform"
-                value={form.platform}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            {["microsoft", "collaboration"].includes(selectedAgent) && (
-              <TextField
-                fullWidth
-                label="Channel"
-                name="channel"
-                value={form.channel}
-                onChange={handleChange}
-                sx={{ mt: 2 }}
-              />
-            )}
-
-            <Button
-              variant="contained"
-              size="large"
-              onClick={runAgent}
-              disabled={loading}
-              sx={{ mt: 3 }}
+        {/* Agent Input */}
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: {
+                xs: 2.5,
+                md: 3,
+              },
+              borderRadius: 4,
+              border: "1px solid #E2E8F0",
+              color: "#0F172A !important",
+              backgroundColor: "#FFFFFF !important",
+            }}
+          >
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              justifyContent="space-between"
+              alignItems={{
+                xs: "flex-start",
+                sm: "center",
+              }}
+              gap={2}
             >
-              {loading ? <CircularProgress size={24} /> : "Run Agent"}
-            </Button>
+              <Stack
+                direction="row"
+                alignItems="center"
+                gap={1.3}
+              >
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 44,
+                    display: "grid",
+                    placeItems: "center",
+                    color: selected.accent,
+                    backgroundColor: selected.soft,
+                    borderRadius: 2.5,
+                  }}
+                >
+                  <SelectedIcon />
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="h6"
+                    fontWeight={900}
+                    sx={{
+                      color: "#0F172A !important",
+                    }}
+                  >
+                    {selected.title}
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      color: "#64748B !important",
+                      fontSize: 12,
+                    }}
+                  >
+                    {selected.description}
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <Chip
+                label="Ready"
+                icon={<CheckCircleRounded />}
+                size="small"
+                sx={{
+                  color: "#15803D !important",
+                  backgroundColor: "#F0FDF4 !important",
+                  border: "1px solid #BBF7D0",
+                  fontWeight: 800,
+
+                  "& .MuiChip-label": {
+                    color: "#15803D !important",
+                  },
+
+                  "& .MuiChip-icon": {
+                    color: "#16A34A !important",
+                  },
+                }}
+              />
+            </Stack>
+
+            <Divider
+              sx={{
+                my: 2.5,
+                borderColor: "#E2E8F0",
+              }}
+            />
+
+            {["system", "features"].includes(
+              selectedAgent
+            ) ? (
+              <Alert
+                severity="info"
+                icon={<AutoAwesomeRounded />}
+                sx={{
+                  mb: 2.5,
+                  borderRadius: 3,
+                }}
+              >
+                This capability does not require input. Press
+                the run button to retrieve the latest project
+                information.
+              </Alert>
+            ) : (
+              renderAgentInputs()
+            )}
 
             {error && (
-              <Alert severity="error" sx={{ mt: 3 }}>
+              <Alert
+                severity="error"
+                sx={{
+                  mt: 2.5,
+                  borderRadius: 3,
+                }}
+              >
                 {error}
               </Alert>
             )}
+
+            <Stack
+              direction={{
+                xs: "column",
+                sm: "row",
+              }}
+              justifyContent="space-between"
+              gap={1.5}
+              mt={3}
+            >
+              <Button
+                onClick={handleReset}
+                disabled={loading}
+                startIcon={<RefreshRounded />}
+                sx={{
+                  color: "#475569 !important",
+                  border: "1px solid #CBD5E1",
+                  borderRadius: 2.5,
+                  px: 2,
+                  fontWeight: 800,
+                  textTransform: "none",
+                }}
+              >
+                Reset
+              </Button>
+
+              <Button
+                variant="contained"
+                size="large"
+                onClick={runAgent}
+                disabled={loading}
+                startIcon={
+                  loading ? (
+                    <CircularProgress
+                      size={18}
+                      color="inherit"
+                    />
+                  ) : (
+                    <PlayArrowRounded />
+                  )
+                }
+                sx={{
+                  minWidth: 180,
+                  py: 1.15,
+                  color: "#FFFFFF !important",
+                  background:
+                    `linear-gradient(135deg, ${selected.accent}, #7C3AED) !important`,
+                  borderRadius: 2.5,
+                  fontWeight: 800,
+                  textTransform: "none",
+
+                  "&:hover": {
+                    opacity: 0.92,
+                  },
+                }}
+              >
+                {loading
+                  ? `${selected.title} is running...`
+                  : `Run ${selected.title}`}
+              </Button>
+            </Stack>
           </Paper>
         </Grid>
 
+        {/* Agent Response */}
         <Grid size={{ xs: 12 }}>
-          <Paper sx={{ p: 3, borderRadius: 4 }}>
-            <Typography variant="h6" mb={2}>
-              Agent Response
-            </Typography>
+          <Paper
+            elevation={0}
+            sx={{
+              p: {
+                xs: 2.5,
+                md: 3,
+              },
+              borderRadius: 4,
+              border: "1px solid #E2E8F0",
+              color: "#0F172A !important",
+              backgroundColor: "#FFFFFF !important",
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              gap={2}
+            >
+              <Stack
+                direction="row"
+                alignItems="center"
+                gap={1.2}
+              >
+                <Box
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    display: "grid",
+                    placeItems: "center",
+                    color: selected.accent,
+                    backgroundColor: selected.soft,
+                    borderRadius: 2.5,
+                  }}
+                >
+                  <AutoAwesomeRounded />
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant="h6"
+                    fontWeight={900}
+                    sx={{
+                      color: "#0F172A !important",
+                    }}
+                  >
+                    Agent Response
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      color: "#64748B !important",
+                      fontSize: 12,
+                    }}
+                  >
+                    Output generated by {selected.title}
+                  </Typography>
+                </Box>
+              </Stack>
+
+              {result && (
+                <Tooltip title="Copy response">
+                  <IconButton
+                    onClick={handleCopy}
+                    sx={{
+                      color: "#4F46E5 !important",
+                      backgroundColor: "#EEF2FF !important",
+                      border: "1px solid #C7D2FE",
+                    }}
+                  >
+                    <ContentCopyRounded fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+
+            <Divider
+              sx={{
+                my: 2.5,
+                borderColor: "#E2E8F0",
+              }}
+            />
 
             <Box
-  component="pre"
-  sx={{
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-    background: "#f8fafc",
-    color: "#111827",
-    p: 2,
-    borderRadius: 3,
-    minHeight: 160,
-    fontFamily: "inherit",
-    border: "1px solid #e5e7eb",
-  }}
->
-  {result ? String(result) : "Run any agent to see response here."}
-</Box>
+              sx={{
+                minHeight: 190,
+                p: {
+                  xs: 2,
+                  md: 2.5,
+                },
+                borderRadius: 3,
+                border: "1px solid #E2E8F0",
+                color: "#0F172A !important",
+                backgroundColor: "#F8FAFC !important",
+              }}
+            >
+              {loading ? (
+                <Box
+                  sx={{
+                    minHeight: 140,
+                    display: "grid",
+                    placeItems: "center",
+                    textAlign: "center",
+                  }}
+                >
+                  <Box>
+                    <CircularProgress size={34} />
 
+                    <Typography
+                      fontWeight={900}
+                      sx={{
+                        color: "#0F172A !important",
+                        mt: 2,
+                      }}
+                    >
+                      {selected.title} is working
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        color: "#64748B !important",
+                        fontSize: 13,
+                        mt: 0.5,
+                      }}
+                    >
+                      Processing your request and preparing the
+                      response...
+                    </Typography>
+                  </Box>
+                </Box>
+              ) : result ? (
+                <Typography
+                  component="pre"
+                  sx={{
+                    m: 0,
+                    color: "#0F172A !important",
+                    fontFamily: "inherit",
+                    fontSize: 14,
+                    lineHeight: 1.75,
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {String(result)}
+                </Typography>
+              ) : (
+                <Box
+                  sx={{
+                    minHeight: 140,
+                    display: "grid",
+                    placeItems: "center",
+                    textAlign: "center",
+                  }}
+                >
+                  <Box>
+                    <AutoAwesomeRounded
+                      sx={{
+                        color: "#CBD5E1",
+                        fontSize: 50,
+                      }}
+                    />
+
+                    <Typography
+                      fontWeight={900}
+                      sx={{
+                        color: "#334155 !important",
+                        mt: 1,
+                      }}
+                    >
+                      No agent response yet
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        color: "#64748B !important",
+                        fontSize: 13,
+                        mt: 0.5,
+                      }}
+                    >
+                      Select an agent, configure the input and
+                      press Run Agent.
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+            </Box>
           </Paper>
         </Grid>
       </Grid>
-    </>
+    </Box>
   );
 };
 

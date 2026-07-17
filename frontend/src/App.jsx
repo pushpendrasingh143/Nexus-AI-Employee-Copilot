@@ -1,4 +1,8 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import {
+  Navigate,
+  Route,
+  Routes,
+} from "react-router-dom";
 
 import Agents from "./pages/Agents/Agents";
 import Login from "./pages/Login/Login";
@@ -11,95 +15,67 @@ import Settings from "./pages/Settings/Settings";
 import NotFound from "./pages/NotFound/NotFound";
 
 import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 import DashboardLayout from "./components/layout/DashboardLayout";
+
+const protectedPage = (page) => (
+  <ProtectedRoute>
+    <DashboardLayout>{page}</DashboardLayout>
+  </ProtectedRoute>
+);
 
 function App() {
   return (
     <Routes>
       <Route
         path="/"
-        element={<Navigate to="/login" replace />}
+        element={
+          <Navigate to="/dashboard" replace />
+        }
       />
 
       <Route
         path="/login"
-        element={<Login />}
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
       />
 
       <Route
         path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <Dashboard />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Dashboard />)}
       />
 
       <Route
         path="/employees"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <Employees />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Employees />)}
       />
 
       <Route
         path="/departments"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <Departments />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Departments />)}
       />
 
       <Route
         path="/documents"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <Documents />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Documents />)}
       />
 
       <Route
         path="/ai"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <AI />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
+        element={protectedPage(<AI />)}
       />
 
       <Route
-  path="/agents"
-  element={
-    <ProtectedRoute>
-      <DashboardLayout>
-        <Agents />
-      </DashboardLayout>
-    </ProtectedRoute>
-  }
-/>
+        path="/agents"
+        element={protectedPage(<Agents />)}
+      />
+
       <Route
         path="/settings"
-        element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <Settings />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
+        element={protectedPage(<Settings />)}
       />
 
       <Route

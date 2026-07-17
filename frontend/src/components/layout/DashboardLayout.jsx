@@ -8,8 +8,10 @@ const DashboardLayout = ({ children }) => {
     <Box
       sx={{
         display: "flex",
+        width: "100%",
         minHeight: "100vh",
         bgcolor: "#F8FAFC",
+        overflowX: "hidden",
       }}
     >
       <Sidebar />
@@ -18,28 +20,36 @@ const DashboardLayout = ({ children }) => {
         component="main"
         sx={{
           flexGrow: 1,
+          minWidth: 0,
           width: {
             xs: "100%",
             md: "calc(100% - 260px)",
           },
-          ml: {
-            xs: 0,
-            md: "260px",
-          },
-          transition: "0.3s",
+          bgcolor: "#F8FAFC",
         }}
       >
         <Navbar />
 
-        <Toolbar />
+        <Toolbar
+          sx={{
+            minHeight: {
+              xs: "64px !important",
+              md: "72px !important",
+            },
+          }}
+        />
 
         <Box
           sx={{
+            width: "100%",
+            maxWidth: "1500px",
+            mx: "auto",
             p: {
               xs: 2,
               sm: 3,
               md: 4,
             },
+            overflowX: "hidden",
           }}
         >
           {children}
